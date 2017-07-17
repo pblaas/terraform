@@ -155,7 +155,7 @@ resource "openstack_compute_instance_v2" "k8s-cluster3-node1" {
   availability_zone = "AMS-EQ1"
   image_id  = "75c34677-9436-4df0-9468-6be009c36fc9"
   flavor_id = "2008" 
-  key_pair  = "PB_ITE_1"
+  key_pair  = "YOUR_KEYPAIR"
   security_groups = ["${openstack_compute_secgroup_v2.secgroup_cluster3_set1.name}","${openstack_compute_secgroup_v2.secgroup_cluster3_set2.name}"]
   user_data = "${file("cloudinit_generator/set/node_192.168.3.10.yaml")}"
 
@@ -169,7 +169,7 @@ resource "openstack_compute_instance_v2" "k8s-cluster3-node2" {
   availability_zone = "AMS-EQ1"                                                                                           
   image_id  = "75c34677-9436-4df0-9468-6be009c36fc9"                                                                      
   flavor_id = "2008"                                                                                                      
-  key_pair  = "PB_ITE_1"                                                                                                  
+  key_pair  = "YOUR_KEYPAIR"                                                                                                  
   security_groups = ["${openstack_compute_secgroup_v2.secgroup_cluster3_set3.name}"]                                                  
   user_data = "${file("cloudinit_generator/set/node_192.168.3.11.yaml")}"                                                 
                                                                                                                           
@@ -183,7 +183,7 @@ resource "openstack_compute_instance_v2" "k8s-cluster3-node3" {
   availability_zone = "AMS-EQ1"                                                                                           
   image_id  = "75c34677-9436-4df0-9468-6be009c36fc9"                                                                      
   flavor_id = "2008"                                                                                                      
-  key_pair  = "PB_ITE_1"                                                                                                  
+  key_pair  = "YOUR_KEYPAIR"                                                                                                  
   security_groups = ["${openstack_compute_secgroup_v2.secgroup_cluster3_set1.name}","${openstack_compute_secgroup_v2.secgroup_cluster3_set2.name}"]                                                  
   user_data = "${file("cloudinit_generator/set/node_192.168.3.12.yaml")}"                                                 
                                                                                                                           

@@ -26,6 +26,7 @@ You should change:
 * user_name   = "YOUR USERNAME"
 * tenant_name = "PROJECTNAME STRING"
 * auth_url    = "https://identity.openstack.cloudvps.com:443/v3"
+* key_pair    = "YOUR-KEY-PAIR-object" 
 
 
 ###### Terraform configuration resources
