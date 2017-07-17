@@ -1,5 +1,6 @@
 ### Dependencies
 
+* This configuration is using CloudVPS openstack object ids e.g flavor, image_id.
 * git client
 * kubectl client
 * terraform client
