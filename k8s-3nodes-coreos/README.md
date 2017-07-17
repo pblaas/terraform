@@ -29,6 +29,10 @@ You should change:
 * auth_url    = "https://identity.openstack.cloudvps.com:443/v3"
 * key_pair    = "YOUR-KEY-PAIR-object" 
 
+##### k8s_floating_ip.txt
+
+You need to insert a available, pre-preserved floating ip in this file. Due to the cloudinit file being generated from scratch the floating ip is used while generating the new SSL certificates.
+
 
 ###### Terraform configuration resources
 
