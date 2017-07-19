@@ -10,9 +10,9 @@
 ##### Usage
 
 * update the cache_on_demand.tf terraform config file with your personal settings.
- * user_name
- * tenant_name
- * key_pair
+  *  user_name
+  * tenant_name
+  * key_pair
 
 * Update the HOST.DOMAIN.LTD in the docker-compose.yml to reflect your destination webserver.
 
