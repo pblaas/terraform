@@ -14,7 +14,7 @@
   * tenant_name
   * key_pair
 
-* Update the HOST.DOMAIN.LTD in the docker-compose.yml to reflect your destination webserver.
+* Update the the docker-compose.yml to reflect your destination webserver HOST.DOMAIN.LTD.
 
 * Concat the SSL private key and SSL certificate into a file called cert.pem
 
@@ -25,4 +25,6 @@ terraform plan
 ```
 terraform apply
 ```
+
+Depending on the assigned security group the instance should be avaiable on atleast port 80 and 443 TCP.
  
