@@ -5,6 +5,7 @@ Terraform configurations
 ##### Configurations
 
 * k8s-3nodes-coreos - Kubernetes 3 nodes CoreOS
+* cache_on_demand - Hitch and Varnish caching solution
 
 
 ##### Docker
