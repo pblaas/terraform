@@ -4,12 +4,17 @@ provider "openstack" {
   auth_url    = "https://identity.openstack.cloudvps.com:443/v3"
 }
 
+resource "openstack_compute_keypair_v2" "jenkins-deployer-key" {
+  key_name   = "jenkins-deployer-key"
+  public_key = "SSHRSA_PUBLICKEY"
+}
+
 resource "openstack_compute_instance_v2" "cache_on_demand-1" {
   name      = "cache_on_demand-1"
   availability_zone = "AMS-EQ1"
   image_id  = "9832f6ea-f5c8-4fbd-90ac-1c17bc76e7ee"
   flavor_id = "2004" 
-  key_pair  = "YOUR_KEYPAIR"
+  key_pair  = "jenkins-deployer-key"
   security_groups = ["Allow-All"]
 
   provisioner "file" {       
