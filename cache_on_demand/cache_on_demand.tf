@@ -5,7 +5,7 @@ provider "openstack" {
 }
 
 resource "openstack_compute_keypair_v2" "jenkins-deployer-key" {
-  key_name   = "jenkins-deployer-key"
+  name   = "jenkins-deployer-key"
   public_key = "SSHRSA_PUBLICKEY"
 }
 
