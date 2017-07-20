@@ -6,7 +6,7 @@ services:
       - "80:80/tcp"  
       - "6083:6083/tcp"
     environment:
-      - "BACKENDHOST=HOST.DOMAIN.LTD"
+      - "BACKENDHOST=HOST_DOMAIN_LTD"
       - "BACKENDPORT=80"
       - "CACHE_SIZE=256m"
   hitch:
