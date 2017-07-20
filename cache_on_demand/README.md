@@ -14,7 +14,7 @@
   * tenant_name
   * key_pair
 
-* Update the the docker-compose.yml to reflect your destination webserver HOST.DOMAIN.LTD.
+* Update the the docker-compose.yml to reflect your destination webserver HOST_DOMAIN_LTD.
 
 * Concat the SSL private key and SSL certificate into a file called cert.pem
 
