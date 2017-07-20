@@ -1,0 +1,40 @@
+podTemplate(label: 'openstack_pod', containers: [
+    containerTemplate(
+        name: 'openstack-cli', 
+        image: 'pblaas/openstack-cli:latest', 
+        ttyEnabled: true,
+        command: 'cat',
+        envVars: [
+            containerEnvVar(key: 'OS_PROJECT_ID', value: "${env.OS_PROJECT_ID}"),
+            containerEnvVar(key: 'OS_PROJECT_NAME', value: "${env.OS_PROJECT_NAME}"),
+            containerEnvVar(key: 'OS_USERNAME', value: "${env.OS_USERNAME}"),
+            containerEnvVar(key: 'OS_PASSWORD', value: "${env.OS_PASSWORD}"),
+            containerEnvVar(key: 'cert_pem', value: "${env.cert_pem}"),
+            containerEnvVar(key: 'file_rsa', value: "${env.file_rsa}"),
+            containerEnvVar(key: 'file_rsa_pub', value: "${env.file_rsa_pub}"),
+            containerEnvVar(key: 'KEYPAIR', value: "${env.KEYPAIR}"),
+            containerEnvVar(key: 'BACKENDHOST', value: "${env.BACKENDHOST}"),
+        ]
+        )],
+    volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')]) {
+
+  node('openstack_pod'){
+         container('openstack-cli'){
+              stage("deploy caching on demand") {
+                 dir ('src'){
+                    git url: 'git://github.com/pblaas/terraform.git'
+                 }
+                 sh "cp -ar src/cache_on_demand/* ."
+                 sh 'echo "$cert_pem" > cert.pem'
+                 sh 'echo "$file_rsa" > file.rsa && chmod 700 file.rsa'
+                 sh 'sed -i s/YOUR_USERNAME/"$OS_USERNAME"/ cache_on_demand.tf'
+                 sh 'sed -i s/YOUR_PROJECTNAME/"$OS_PROJECT_NAME"/ cache_on_demand.tf'
+                 sh 'sed -i s/YOUR_KEYPAIR/"$KEYPAIR"/ cache_on_demand.tf'
+                 sh 'sed -i s@SSHRSA_PUBLICKEY@"$file_rsa_pub"@ cache_on_demand.tf'
+                 sh 'sed -i s/HOST_DOMAIN_LTD/"$BACKENDHOST"/ docker-compose.yml'
+                 sh 'exec ssh-agent /bin/bash -c "ssh-add file.rsa && terraform plan && terraform apply"'
+              }
+         }
+  }
+  
+}
