@@ -32,6 +32,7 @@ podTemplate(label: 'openstack_pod', containers: [
                  sh 'sed -i s/YOUR_KEYPAIR/"$KEYPAIR"/ cache_on_demand.tf'
                  sh 'sed -i s@SSHRSA_PUBLICKEY@"$file_rsa_pub"@ cache_on_demand.tf'
                  sh 'sed -i s/HOST_DOMAIN_LTD/"$BACKENDHOST"/ docker-compose.yml'
+                 sh 'terraform init && terraform plan'
                  sh 'exec ssh-agent /bin/bash -c "ssh-add file.rsa && terraform plan && terraform apply"'
               }
          }
