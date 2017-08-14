@@ -146,22 +146,22 @@ resource "openstack_compute_instance_v2" "k8s-{{ clustername }}-node{{ counter +
 
 {% endfor %}
 
-resource "openstack_networking_floatingip_v2" "fip_c3_f1" {
+resource "openstack_networking_floatingip_v2" "fip_{{ clustername }}_f1" {
   pool = "floating"
   fixed_ip = "{{ floatingip1 }}"
 }
 
-resource "openstack_networking_floatingip_v2" "fip_c3_f2" {
+resource "openstack_networking_floatingip_v2" "fip_{{ clustername }}_f2" {
   pool = "floating"
   fixed_ip = "{{ floatingip2 }}"
 }
 
-resource "openstack_compute_floatingip_associate_v2" "fip_c3_f1" {
+resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f1" {
   instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node10.id}"
-  floating_ip = "${openstack_networking_floatingip_v2.fip_c3_f1.fixed_ip}"
+  floating_ip = "${openstack_networking_floatingip_v2.fip_{{ clustername }}_f1.fixed_ip}"
 }
 
-resource "openstack_compute_floatingip_associate_v2" "fip_c3_f2" {
+resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
   instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node12.id}"
-  floating_ip = "${openstack_networking_floatingip_v2.fip_c3_f2.fixed_ip}"
+  floating_ip = "${openstack_networking_floatingip_v2.fip_{{ clustername }}_f2.fixed_ip}"
 }
