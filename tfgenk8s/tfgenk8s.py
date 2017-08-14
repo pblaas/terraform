@@ -110,6 +110,6 @@ except Exception as e:
 else:
     print("-----------------------------")
     print("Config generation succesfull.")
-    print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.")
+    print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
     print("To start building the cluster: \nterraform init && terraform plan && terraform apply && sh snat_acl.sh")
     print("To interact with the cluster: \nsh kubeconfig.sh")
