@@ -6,7 +6,7 @@ Terraform configurations
 
 * k8s_3nodes_coreos - Kubernetes 3 nodes CoreOS
 * cache_on_demand - Hitch and Varnish caching solution
-* tfgenk8s.py - Python script to generated Terraform file
+* tfgenk8s.py - Python script to generate Terraform file
 
 
 ##### Docker
