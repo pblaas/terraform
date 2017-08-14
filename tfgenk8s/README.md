@@ -8,6 +8,7 @@ This project consists of the python script tfgenk8s.py and three template files.
 * Python2.x
 * Jinja2 python module
 * git
+* Openstack 'allow-all' security group for SNAT ports. 
 
 ### Usage
 ```
