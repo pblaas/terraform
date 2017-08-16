@@ -32,7 +32,7 @@ parser.add_argument("--projectname", help="Openstack Project Name ", default=os.
 parser.add_argument("--clustername", default="k8scluster")
 parser.add_argument("--subnetcidr", help="Private Subnet CIDR", default="192.168.3.0/24")
 parser.add_argument("--nodes", help="Number of k8s nodes", type=int, default=3)
-parser.add_argument("--imageflavor", help="Image falvor ID", type=int, default=2008)
+parser.add_argument("--imageflavor", help="Image flavor ID", type=int, default=2008)
 parser.add_argument("--dnsserver", help="DNS server", default="8.8.8.8")
 parser.add_argument("--k8sver", help="Hyperkube version", default="v1.7.3_coreos.0")
 parser.add_argument("--sshkey1", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
