@@ -12,16 +12,14 @@ This project consists of the python script tfgenk8s.py and three template files.
 
 ### Usage
 ```
-usage: tfgenk8s.py [-h] [--clustername CLUSTERNAME] [--subnetcidr SUBNETCIDR]
+usage: tfgenk8s.py [-h] [--username USERNAME] [--projectname PROJECTNAME]
+                   [--clustername CLUSTERNAME] [--subnetcidr SUBNETCIDR]
                    [--nodes NODES] [--imageflavor IMAGEFLAVOR]
                    [--dnsserver DNSSERVER] [--k8sver K8SVER]
                    [--sshkey1 SSHKEY1] [--sshkey2 SSHKEY2]
-                   username projectname keypair floatingip1 floatingip2
-                   corepassword
+                   keypair floatingip1 floatingip2 corepassword
 
 positional arguments:
-  username              Openstack Username
-  projectname           Openstack Project Name
   keypair               Keypair ID
   floatingip1           Floatingip 1 for API calls
   floatingip2           Floatingip 2 for public access to cluster
@@ -29,12 +27,15 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --username USERNAME   Openstack Username
+  --projectname PROJECTNAME
+                        Openstack Project Name
   --clustername CLUSTERNAME
   --subnetcidr SUBNETCIDR
-                        Private Subnet cidr
+                        Private Subnet CIDR
   --nodes NODES         Number of k8s nodes
   --imageflavor IMAGEFLAVOR
-                        Image ID of the VM
+                        Image falvor ID
   --dnsserver DNSSERVER
                         DNS server
   --k8sver K8SVER       Hyperkube version
