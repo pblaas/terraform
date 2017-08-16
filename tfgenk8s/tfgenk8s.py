@@ -17,12 +17,12 @@ TEMPLATE_ENVIRONMENT = Environment(
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("username", help="Openstack Username")
-parser.add_argument("projectname", help="Openstack Project Name ")
 parser.add_argument("keypair", help="Keypair ID")
 parser.add_argument("floatingip1", help="Floatingip 1 for API calls")
 parser.add_argument("floatingip2", help="Floatingip 2 for public access to cluster")
 parser.add_argument("corepassword", help="password to authenticate with core user")
+parser.add_argument("--username", help="Openstack Username", default=os.environ['OS_USERNAME'])
+parser.add_argument("--projectname", help="Openstack Project Name ", default=os.environ['OS_TENANT_NAME'])
 parser.add_argument("--clustername", default="k8scluster")
 parser.add_argument("--subnetcidr", help="Private Subnet CIDR", default="192.168.3.0/24")
 parser.add_argument("--nodes", help="Number of k8s nodes", type=int, default=3)
