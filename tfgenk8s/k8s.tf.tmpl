@@ -132,7 +132,7 @@ resource "openstack_networking_port_v2" "k8s_{{ clustername }}_port_{{ counter +
 resource "openstack_compute_instance_v2" "k8s-{{ clustername }}-node{{ counter + loop.index -1 }}" {
   name      = "k8s-{{ clustername }}-node{{ counter + loop.index - 1 }}"
   availability_zone = "AMS-EQ1"
-  image_id  = "75c34677-9436-4df0-9468-6be009c36fc9"
+  image_id  = "7e8923c9-d2a5-4822-b9c3-383b6219de05"
   flavor_id = "{{ imageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.name}"]
