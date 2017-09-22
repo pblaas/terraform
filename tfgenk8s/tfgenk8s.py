@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __status__ = "Prototype"
 
 import argparse
@@ -19,8 +19,16 @@ TEMPLATE_ENVIRONMENT = Environment(
 # Testing if environment variables are available.
 if not "OS_USERNAME" in os.environ:
     os.environ["OS_USERNAME"]="Default"
+if not "OS_PASSWORD" in os.environ:
+    os.environ["OS_PASSWORD"]="Default"
 if not "OS_TENANT_NAME" in os.environ:
     os.environ["OS_TENANT_NAME"]="Default"
+if not "OS_TENANT_ID" in os.environ:
+    os.environ["OS_TENANT_ID"]="Default"
+if not "OS_REGION_NAME" in os.environ:
+    os.environ["OS_REGION_NAME"]="Default"
+if not "OS_AUTH_URL" in os.environ:
+    os.environ["OS_AUTH_URL"]="Default"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("keypair", help="Keypair ID")
@@ -42,6 +50,7 @@ args = parser.parse_args()
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
 config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
+cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 
 try:
     if args.nodes < 3:
@@ -82,6 +91,15 @@ try:
         masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10"
         ))
 
+    cloudconfig_template = (cloudconfig_template.render(
+        authurl=os.environ["OS_AUTH_URL"],
+        username=args.username,
+        password=os.environ["OS_PASSWORD"],
+        region=os.environ["OS_REGION_NAME"],
+        projectname=args.projectname,
+        tenantid=os.environ["OS_TENANT_ID"],
+        ))
+
     with open('kubeconfig.sh', 'w') as kubeconfig:
         kubeconfig.write(kubeconfig_template)
 
@@ -90,6 +108,9 @@ try:
 
     with open('k8s.tf', 'w') as k8s:
        k8s.write(k8stemplate)
+
+    with open('cloud.conf', 'w') as cloudconf:
+       cloudconf.write(cloudconfig_template)
 
     list=""
     listArray=[]
