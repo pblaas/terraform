@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __status__ = "Prototype"
 
 import argparse
@@ -27,14 +27,14 @@ parser.add_argument("keypair", help="Keypair ID")
 parser.add_argument("floatingip1", help="Floatingip 1 for API calls")
 parser.add_argument("floatingip2", help="Floatingip 2 for public access to cluster")
 parser.add_argument("corepassword", help="Password to authenticate with core user")
-parser.add_argument("--username", help="Openstack username", default=os.environ["OS_USERNAME"])
-parser.add_argument("--projectname", help="Openstack project Name ", default=os.environ["OS_TENANT_NAME"])
-parser.add_argument("--clustername", default="k8scluster")
-parser.add_argument("--subnetcidr", help="Private subnet CIDR", default="192.168.3.0/24")
-parser.add_argument("--nodes", help="Number of k8s nodes", type=int, default=3)
-parser.add_argument("--imageflavor", help="Image flavor ID", type=int, default=2008)
-parser.add_argument("--dnsserver", help="DNS server", default="8.8.8.8")
-parser.add_argument("--k8sver", help="Hyperkube version", default="v1.7.3_coreos.0")
+parser.add_argument("--username", help="Openstack username - (OS_USERNAME environment variable)", default=os.environ["OS_USERNAME"])
+parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
+parser.add_argument("--clustername", help="Clustername - (k8scluster)", default="k8scluster")
+parser.add_argument("--subnetcidr", help="Private subnet CIDR - (192.168.3.0/24)", default="192.168.3.0/24")
+parser.add_argument("--nodes", help="Number of k8s nodes - (3)", type=int, default=3)
+parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
+parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
+parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.6_coreos.0)", default="v1.7.6_coreos.0")
 parser.add_argument("--sshkey1", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
 parser.add_argument("--sshkey2", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
 args = parser.parse_args()
@@ -102,7 +102,7 @@ try:
        k8scips.write(str(list))
 
 
-    subprocess.call(["git", "clone", "https://github.com/pblaas/cloudinit_generator.git"])
+    subprocess.call(["git", "clone", "-b", "master", "https://github.com/pblaas/cloudinit_generator.git"])
     subprocess.call(["cp", "-v", "config.env", "./cloudinit_generator"])
     subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
 
