@@ -42,6 +42,7 @@ parser.add_argument("--subnetcidr", help="Private subnet CIDR - (192.168.3.0/24)
 parser.add_argument("--nodes", help="Number of k8s nodes - (3)", type=int, default=3)
 parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
+parser.add_argument("--cloudprovider", help="Cloud provider support - (openstack)", default="openstack")
 parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.6_coreos.0)", default="v1.7.6_coreos.0")
 parser.add_argument("--sshkey1", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
 parser.add_argument("--sshkey2", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
@@ -77,6 +78,7 @@ try:
         k8sver=args.k8sver,
         sshkey1=args.sshkey1,
         sshkey2=args.sshkey2,
+        cloudprovider=args.cloudprovider,
         corepassword=args.corepassword,
         subnetsidr=args.subnetcidr,
         masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10",
