@@ -127,7 +127,7 @@ try:
        k8scips.write(str(list))
 
 
-    subprocess.call(["git", "clone", "-b", "master", "https://github.com/pblaas/cloudinit_generator.git"])
+    subprocess.call(["git", "clone", "-b", "feature/variable_flanneld_version", "https://github.com/pblaas/cloudinit_generator.git"])
     subprocess.call(["cp", "-v", "config.env", "./cloudinit_generator"])
     subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
 
