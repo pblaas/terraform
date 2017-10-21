@@ -39,6 +39,7 @@ parser.add_argument("--username", help="Openstack username - (OS_USERNAME enviro
 parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
 parser.add_argument("--clustername", help="Clustername - (k8scluster)", default="k8scluster")
 parser.add_argument("--subnetcidr", help="Private subnet CIDR - (192.168.3.0/24)", default="192.168.3.0/24")
+parser.add_argument("--calicocidr", help="Calico subnet CIDR - (192.168.50.0/20)", default="192.168.50.0/20")
 parser.add_argument("--nodes", help="Number of k8s nodes - (3)", type=int, default=3)
 parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
@@ -68,6 +69,7 @@ try:
         clustername=args.clustername,
         nodes=args.nodes,
         subnetcidr=args.subnetcidr,
+        calicocidr=args.calicocidr,
         keypair=args.keypair,
         imageflavor=args.imageflavor,
         floatingip1=args.floatingip1,
@@ -84,6 +86,7 @@ try:
         cloudprovider=args.cloudprovider,
         corepassword=args.corepassword,
         subnetcidr=args.subnetcidr,
+        calicocidr=args.calicocidr,
         masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10",
         masterhostgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
         workergw=(args.subnetcidr).rsplit('.', 1)[0]+".1",

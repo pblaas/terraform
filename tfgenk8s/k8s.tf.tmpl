@@ -89,27 +89,27 @@ resource "openstack_compute_secgroup_v2" "secgroup_{{ clustername }}_set2" {
 
 resource "openstack_compute_secgroup_v2" "secgroup_{{ clustername }}_set3" {
   name        = "secgroup_{{ clustername }}_set3"
-  description = "Allow internal LAN communication"
+  description = "Allow internal Calico LAN communication"
 
   rule {
     from_port   = 1
     to_port     = 65535
     ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
+    cidr        = "{{ calicocidr }}"
   }
 
   rule {
     from_port   = 1
     to_port     = 65535
     ip_protocol = "udp"
-    cidr        = "0.0.0.0/0"
+    cidr        = "{{ calicocidr }}"
   }
 
   rule {
     from_port   = -1
     to_port     = -1
     ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
+    cidr        = "{{ calicocidr }}"
   }
 }
 
@@ -120,7 +120,7 @@ resource "openstack_networking_port_v2" "k8s_{{ clustername }}_port_{{ counter +
   name               = "k8s_{{ clustername }}_port_{{ counter + loop.index - 1 }}"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
   admin_state_up     = "true"
-  security_group_ids = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.id}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.id}"]
+  security_group_ids = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.id}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.id}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set3.id}"]
 
   fixed_ip {
     "subnet_id"  = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
@@ -135,7 +135,7 @@ resource "openstack_compute_instance_v2" "k8s-{{ clustername }}-node{{ counter +
   image_name  = "Container Linux CoreOS (third-party)"
   flavor_id = "{{ imageflavor }}"
   key_pair  = "{{ keypair }}"
-  security_groups = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.name}"]
+  security_groups = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set3.name}"]
   user_data = "${file("cloudinit_generator/set/node_{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter + loop.index -1  }}.yaml")}"
 
   network {
