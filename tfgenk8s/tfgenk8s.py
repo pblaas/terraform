@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __status__ = "Prototype"
 
 import argparse
@@ -39,7 +39,7 @@ parser.add_argument("--username", help="Openstack username - (OS_USERNAME enviro
 parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
 parser.add_argument("--clustername", help="Clustername - (k8scluster)", default="k8scluster")
 parser.add_argument("--subnetcidr", help="Private subnet CIDR - (192.168.3.0/24)", default="192.168.3.0/24")
-parser.add_argument("--calicocidr", help="Calico subnet CIDR - (192.168.50.0/20)", default="192.168.50.0/20")
+parser.add_argument("--calicocidr", help="Calico subnet CIDR - (192.168.48.0/20)", default="192.168.48.0/20")
 parser.add_argument("--nodes", help="Number of k8s nodes - (3)", type=int, default=3)
 parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
