@@ -39,7 +39,7 @@ optional arguments:
   --subnetcidr SUBNETCIDR
                         Private subnet CIDR - (192.168.3.0/24)
   --calicocidr CALICOCIDR
-                        Calico subnet CIDR - (192.168.48.0/20)
+                        Calico subnet CIDR - (10.244.0.0/16)
   --nodes NODES         Number of k8s nodes - (3)
   --imageflavor IMAGEFLAVOR
                         Image flavor ID - (2008)
