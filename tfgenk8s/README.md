@@ -14,8 +14,10 @@ This project consists of the python script tfgenk8s.py and three template files.
 ```
 usage: tfgenk8s.py [-h] [--username USERNAME] [--projectname PROJECTNAME]
                    [--clustername CLUSTERNAME] [--subnetcidr SUBNETCIDR]
-                   [--nodes NODES] [--imageflavor IMAGEFLAVOR]
-                   [--dnsserver DNSSERVER] [--k8sver K8SVER]
+                   [--calicocidr CALICOCIDR] [--nodes NODES]
+                   [--imageflavor IMAGEFLAVOR] [--dnsserver DNSSERVER]
+                   [--cloudprovider CLOUDPROVIDER] [--k8sver K8SVER]
+                   [--flannelver FLANNELVER] [--gitbranch GITBRANCH]
                    [--sshkey1 SSHKEY1] [--sshkey2 SSHKEY2]
                    keypair floatingip1 floatingip2 corepassword
 
@@ -23,22 +25,33 @@ positional arguments:
   keypair               Keypair ID
   floatingip1           Floatingip 1 for API calls
   floatingip2           Floatingip 2 for public access to cluster
-  corepassword          password to authenticate with core user
+  corepassword          Password to authenticate with core user
 
 optional arguments:
   -h, --help            show this help message and exit
-  --username USERNAME   Openstack Username
+  --username USERNAME   Openstack username - (OS_USERNAME environment
+                        variable)
   --projectname PROJECTNAME
-                        Openstack Project Name
+                        Openstack project Name - (OS_TENANT_NAME environment
+                        variable)
   --clustername CLUSTERNAME
+                        Clustername - (k8scluster)
   --subnetcidr SUBNETCIDR
-                        Private Subnet CIDR
-  --nodes NODES         Number of k8s nodes
+                        Private subnet CIDR - (192.168.3.0/24)
+  --calicocidr CALICOCIDR
+                        Calico subnet CIDR - (192.168.48.0/20)
+  --nodes NODES         Number of k8s nodes - (3)
   --imageflavor IMAGEFLAVOR
-                        Image falvor ID
+                        Image flavor ID - (2008)
   --dnsserver DNSSERVER
-                        DNS server
-  --k8sver K8SVER       Hyperkube version
+                        DNS server - (8.8.8.8)
+  --cloudprovider CLOUDPROVIDER
+                        Cloud provider support - (openstack)
+  --k8sver K8SVER       Hyperkube version - (v1.7.6_coreos.0)
+  --flannelver FLANNELVER
+                        Flannel image version - (v0.8.0)
+  --gitbranch GITBRANCH
+                        Cloudinit_generator branch - (master)
   --sshkey1 SSHKEY1     SSH key for remote access
   --sshkey2 SSHKEY2     SSH key for remote access
 ```
