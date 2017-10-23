@@ -150,7 +150,7 @@ resource "openstack_compute_instance_v2" "k8s-{{ clustername }}-node{{ counter +
   image_name  = "Container Linux CoreOS (third-party)"
   flavor_id = "{{ imageflavor }}"
   key_pair  = "{{ keypair }}"
-  security_groups = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set3.name}","${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1}"]
+  security_groups = ["${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set1.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set2.name}","${openstack_compute_secgroup_v2.secgroup_{{ clustername }}_set3.name}","${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.name}"]
   user_data = "${file("cloudinit_generator/set/node_{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter + loop.index -1  }}.yaml")}"
 
   network {
