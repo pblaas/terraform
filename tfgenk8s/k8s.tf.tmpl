@@ -73,7 +73,7 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-3
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-3" {
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-4" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
