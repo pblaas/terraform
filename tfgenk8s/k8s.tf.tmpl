@@ -113,6 +113,21 @@ resource "openstack_compute_secgroup_v2" "secgroup_{{ clustername }}_set3" {
   }
 }
 
+resource "openstack_networking_secgroup_v2" "secgroup_{{ clustername }}-1" {
+  name        = "secgroup_{{ clustername }}-1"
+  description = "K8s Security group"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-1.1" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "4"
+  port_range_min    = 1
+  port_range_max    = 65535
+  remote_ip_prefix  = "{{ subnetcidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+}
+
 
 {%- set counter = 10 %}
 {%- for _ in range(counter, counter+nodes) %}
