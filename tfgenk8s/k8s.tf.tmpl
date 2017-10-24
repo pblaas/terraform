@@ -27,7 +27,6 @@ resource "openstack_networking_router_interface_v2" "k8s_{{ clustername }}_route
   subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
 }
 
-
 resource "openstack_networking_secgroup_v2" "secgroup_{{ clustername }}-1" {
   name        = "secgroup_{{ clustername }}-1"
   description = "K8s Security group"
@@ -41,6 +40,7 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-1-1
   port_range_max    = 65535
   remote_ip_prefix  = "{{ subnetcidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = ["openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-1" {
@@ -51,6 +51,10 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-1
   port_range_max    =  80
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-1-1"
+     ]
+
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-2" {
@@ -61,6 +65,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-2
   port_range_max    =  443
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-1"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-3" {
@@ -71,6 +78,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-3
   port_range_max    =  8081
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-2"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-4" {
@@ -81,6 +91,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-4
   port_range_max    =  22
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-3"
+     ]
 }
 
 
@@ -92,6 +105,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-1
   port_range_max    =  65535
   remote_ip_prefix  = "{{ subnetcidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-4"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-2" {
@@ -102,6 +118,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-2
   port_range_max    =  65535
   remote_ip_prefix  = "{{ subnetcidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-1"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-3" {
@@ -110,6 +129,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-3
   protocol          = "icmp"
   remote_ip_prefix  = "{{ subnetcidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-2"
+     ]
 }
 
 
@@ -121,6 +143,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-1
   port_range_max    =  65535
   remote_ip_prefix  = "{{ calicocidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-3"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-2" {
@@ -131,6 +156,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-2
   port_range_max    =  65535
   remote_ip_prefix  = "{{ calicocidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-4-1"
+     ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-3" {
@@ -139,6 +167,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-3
   protocol          = "icmp"
   remote_ip_prefix  = "{{ calicocidr }}"
   security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-4-2"
+     ]
 }
 
 
