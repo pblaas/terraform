@@ -1,0 +1,31 @@
+#!/bin/bash
+# Secundaries Bootstrap
+apt-get update
+apt-get install -y \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  software-properties-common \
+  jq \
+  etcd
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs) stable"
+apt-get update
+apt-get install -y docker-ce
+
+
+WORKERT=$(curl -LsS http://{{ bootstrapmaster }}:2379/v2/keys | jq '.[]' | jq '.nodes[0].value'|sed 's/\"//g')
+MANAGERT=$(curl -LsS http://{{ bootstrapmaster }}:2379/v2/keys | jq '.[]' | jq '.nodes[1].value'|sed 's/\"//g')
+
+#join as worker
+docker swarm join --token $MANAGERT {{ bootstrapmaster }}:2377
+
+echo '
+ ___   ___   ___ _  _____ ___  _____      ___   ___ __  __ 
+|   \ / _ \ / __| |/ / __| _ \/ __\ \    / /_\ | _ \  \/  |
+| |) | (_) | (__| ' <| _||   /\__ \\ \/\/ / _ \|   / |\/| |
+|___/ \___/ \___|_|\_\___|_|_\|___/ \_/\_/_/ \_\_|_\_|  |_|
+                                                           
+' > /etc/motd
+
