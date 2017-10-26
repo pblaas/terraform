@@ -266,11 +266,11 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 
 
 resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f1" {
-  instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node10.id}"
+  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node10.id}"
   floating_ip = "{{ floatingip1 }}"
 }
 
 resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
-  instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node12.id}"
+  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node12.id}"
   floating_ip = "{{ floatingip2 }}"
 }
