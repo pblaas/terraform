@@ -235,20 +235,20 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 {% endfor %}
 
 {%- for _ in range(counter+managernodes, counter+workernodes+managernodes) %}
-resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index - 1 }}" {
-  name               = "k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index - 1 }}"
+resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index }}" {
+  name               = "k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index  }}"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
   admin_state_up     = "true"
   security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
 
   fixed_ip {
     "subnet_id"  = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-    "ip_address" = "{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter+managernodes + loop.index - 1 }}"
+    "ip_address" = "{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter+managernodes + loop.index  }}"
   }
 }
 
-resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index -1 }}" {
-  name      = "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index - 1 }}"
+resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index }}" {
+  name      = "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index  }}"
   availability_zone = "AMS-EQ1"
   image_name  = "Ubuntu 17.10"
   flavor_id = "{{ imageflavor }}"
@@ -258,7 +258,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 
   network {
     name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
-    port = "${openstack_networking_port_v2.k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index - 1}}.id}"
+    port = "${openstack_networking_port_v2.k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index }}.id}"
   }
   depends_on = ["openstack_compute_instance_v2.swarm-{{ clustername }}-node10"]
 }
