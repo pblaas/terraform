@@ -30,7 +30,7 @@ resource "openstack_networking_router_interface_v2" "swarm_{{ clustername }}_rou
 
 resource "openstack_networking_secgroup_v2" "secgroup_{{ clustername }}-1" {
   name        = "secgroup_{{ clustername }}-1"
-  description = "K8s Security group"
+  description = "swarm Security group"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-1-1" {
@@ -176,7 +176,7 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-3
 
 ## Bootstrap resource
 resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_10" {
-  name               = "k8s_{{ clustername }}_port_10"
+  name               = "swarm_{{ clustername }}_port_10"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
   admin_state_up     = "true"
   security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
@@ -198,7 +198,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
 
   network {
     name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
-    port = "${openstack_networking_port_v2.k8s_{{ clustername }}_port_10.id}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_10.id}"
   }
 }
 
@@ -206,7 +206,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
 {%- set counter = 10 %}
 {%- for _ in range(counter, counter+managernodes) %}
 resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter + loop.index  }}" {
-  name               = "k8s_{{ clustername }}_port_{{ counter + loop.index }}"
+  name               = "swarm_{{ clustername }}_port_{{ counter + loop.index }}"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
   admin_state_up     = "true"
   security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
@@ -228,7 +228,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 
   network {
     name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
-    port = "${openstack_networking_port_v2.k8s_{{ clustername }}_port_{{ counter + loop.index }}.id}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_{{ counter + loop.index }}.id}"
   }
   depends_on = ["openstack_compute_instance_v2.swarm-{{ clustername }}-node10"]
 }
@@ -236,7 +236,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 
 {%- for _ in range(counter+managernodes, counter+workernodes+managernodes) %}
 resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index }}" {
-  name               = "k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index  }}"
+  name               = "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index  }}"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
   admin_state_up     = "true"
   security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
@@ -258,7 +258,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
 
   network {
     name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
-    port = "${openstack_networking_port_v2.k8s_{{ clustername }}_port_{{ counter+managernodes + loop.index }}.id}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index }}.id}"
   }
   depends_on = ["openstack_compute_instance_v2.swarm-{{ clustername }}-node10"]
 }
