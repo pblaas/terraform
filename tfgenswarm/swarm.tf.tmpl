@@ -194,7 +194,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
   flavor_id = "{{ imageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
-  user_data = "${file("swarwmbootstrap.sh")}"
+  user_data = "${file("swarmbootstrap.sh")}"
 
   network {
     name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
