@@ -271,6 +271,6 @@ resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f1" 
 }
 
 resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
-  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node12.id}"
+  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node{%- counter+managernodes+1)}.id}"
   floating_ip = "{{ floatingip2 }}"
 }
