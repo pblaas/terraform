@@ -7,6 +7,7 @@ __status__ = "Prototype"
 import argparse
 import os
 import subprocess
+import base64
 from jinja2 import Environment, Template, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +48,7 @@ parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", def
 args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('swarm.tf.tmpl')
+bootstrap_template = TEMPLATE_ENVIRONMENT.get_template('swarmbootstrap.sh.tmpl')
 worker_template = TEMPLATE_ENVIRONMENT.get_template('swarmworker.sh.tmpl')
 manager_template = TEMPLATE_ENVIRONMENT.get_template('swarmmanager.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
@@ -67,6 +69,15 @@ try:
         imageflavor=args.imageflavor,
         floatingip1=args.floatingip1,
         floatingip2=args.floatingip2,
+        ))
+
+    bootstrap_template = (bootstrap_template.render(
+        with open('./tls/ca.pem', 'r') as capem:
+          CAPEM=base64.b64encode(capem)
+        with open('./tls/swarmserver.pem', 'r') as swarmpem:
+          SWARMCERT=base64.b64encode(swarmpem)
+        with open('./tls/swarmserver-key.pem', 'r') as swarmkey:
+          SWARMKEY=base64.b64encode(swarmkey)
         ))
 
     worker_template = (worker_template.render(
