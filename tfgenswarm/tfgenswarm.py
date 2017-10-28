@@ -71,13 +71,18 @@ try:
         floatingip2=args.floatingip2,
         ))
 
+
+    buffer = open('./tls/ca.pem', 'rU').read()
+    CAPEM=base64.b64encode(buffer)
+    buffer = open('./tls/swarmserver.pem', 'rU').read()
+    SWARMCERT=base64.b64encode(buffer)
+    buffer = open('./tls/swarmserver-key.pem', 'rU').read()
+    SWARMKEY=base64.b64encode(buffer)
+
     bootstrap_template = (bootstrap_template.render(
-        with open('./tls/ca.pem', 'r') as capem:
-          CAPEM=base64.b64encode(capem)
-        with open('./tls/swarmserver.pem', 'r') as swarmpem:
-          SWARMCERT=base64.b64encode(swarmpem)
-        with open('./tls/swarmserver-key.pem', 'r') as swarmkey:
-          SWARMKEY=base64.b64encode(swarmkey)
+        CAPEM=CAPEM,
+        SWARMCERT=SWARMCERT,
+        SWARMKEY=SWARMKEY
         ))
 
     worker_template = (worker_template.render(
