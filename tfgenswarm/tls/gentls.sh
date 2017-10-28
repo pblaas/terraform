@@ -16,7 +16,7 @@ openssl req -new -key client1-key.pem -out client1.csr -subj "/CN=client1" -conf
 openssl x509 -req -in client1.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client1.pem -days 365 -extensions v3_req -extfile openssl.cnf
 
 echo You can create the following alias for use of use:
-echo alias swarm=\"docker --tlsverify --tlscacert=ca.pem --tlscert=client1.pem --tlskey=client1-key.pem -H=$1:2376\"
+echo alias swarm=\"docker --tlsverify --tlscacert=$PWD/ca.pem --tlscert=$PWD/client1.pem --tlskey=$PWD/client1-key.pem -H=$1:2376\"
 echo It can take a couple of minutes before the cluster is bootstrapped. Please be patient.
 
 #server needs dockerd --tlsverify --tlscacert=ca.pem --tlscert=swarmserver.pem --tlskey=swarmserver-key.pem -H=0.0.0.0:2376
