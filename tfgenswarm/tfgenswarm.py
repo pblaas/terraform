@@ -100,6 +100,9 @@ try:
     with open('swarm.tf', 'w') as swarm:
        swarm.write(swarmtemplate)
 
+    with open('swarmbootstrap.sh', 'w') as swarmbootstrap:
+       swarmbootstrap.write(bootstrap_template)
+
     with open('swarmworker.sh', 'w') as swarmworker:
        swarmworker.write(worker_template)
 
