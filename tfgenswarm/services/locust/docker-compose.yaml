@@ -25,7 +25,8 @@ services:
   locustslave:
     image: pblaas/locust-test 
     environment:
-      -  LOCUST_MODE=master
+      -  LOCUST_MODE=slave
+      -  MASTER_HOST=locustmaster
       -  TARGET_URL=http://127.0.0.1 
     networks:
       - locust
