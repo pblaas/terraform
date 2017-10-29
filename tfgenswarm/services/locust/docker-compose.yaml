@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+
+  locustmaster:
+    image: pblaas/locust-test 
+    environment:
+      -  LOCUST_MODE=master
+      -  TARGET_URL=http://127.0.0.1 
+    networks:
+      - proxy
+      - locust
+    deploy:
+      placement:
+        constraints: [node.role == worker]            
+      replicas: 1 
+      labels:
+        - com.df.notify=true
+        - com.df.distribute=true
+        - com.df.servicePath=/
+        - com.df.port=8089
+        - com.df.users=demo:proserve
+        - com.df.serviceDomain=locust.service.yourdomain.ltd
+
+  locustslave:
+    image: pblaas/locust-test 
+    environment:
+      -  LOCUST_MODE=master
+      -  TARGET_URL=http://127.0.0.1 
+    networks:
+      - locust
+    deploy:
+      placement:
+        constraints: [node.role == worker] 
+      replicas: 8
+
+networks:
+  locust:
+    external: false
+  proxy:
+    external: true
+
