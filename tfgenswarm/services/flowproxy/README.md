@@ -2,6 +2,7 @@ For more info checkout the project URL at http://proxy.dockerflow.com/swarm-mode
 
 To deploy this stack:
 ```
+swarm network create --driver overlay proxy
 swarm stack deploy -c docker-compose-stack.yml proxy
 ```
 
