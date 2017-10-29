@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __status__ = "Prototype"
 
 import argparse
@@ -49,6 +49,7 @@ args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('swarm.tf.tmpl')
 bootstrap_template = TEMPLATE_ENVIRONMENT.get_template('swarmbootstrap.sh.tmpl')
+openssl_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 worker_template = TEMPLATE_ENVIRONMENT.get_template('swarmworker.sh.tmpl')
 manager_template = TEMPLATE_ENVIRONMENT.get_template('swarmmanager.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
@@ -56,6 +57,25 @@ cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 try:
     if args.managernodes < 3:
         raise Exception('Nodes need to be no less then 3.')
+
+    openssltemplate = (openssl_template.render(
+        floatingip1=args.floatingip1
+        ))
+
+    with open('./tls/openssl.cnf', 'w') as openssl:
+       openssl.write(openssltemplate)
+
+    #subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
+    subprocess.call(["openssl", "genrsa", "-out", "ca-key.pem", "2048"], cwd='./tls')
+    subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "ca-key.pem", "-days", "10000", "-out", "ca.pem", "-subj", "/CN=swarm-ca"], cwd='./tls')
+    subprocess.call(["openssl", "genrsa", "-out", "swarmserver-key.pem", "2048"], cwd='./tls')
+    subprocess.call(["openssl", "req", "-new", "-key", "swarmserver-key.pem", "-out", "swarmserver.csr", "-subj", "/CN=swarmserver", "-config", "openssl.cnf"], cwd='./tls')
+    subprocess.call(["openssl", "x509", "-req", "-in", "swarmserver.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "swarmserver.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
+    subprocess.call(["openssl", "genrsa", "-out", "client1-key.pem", "2048"], cwd='./tls')
+    subprocess.call(["openssl", "req", "-new", "-key", "client1-key.pem", "-out", "client1.csr", "-subj", "/CN=client1", "-config", "openssl.cnf"], cwd='./tls')
+    subprocess.call(["openssl", "x509", "-req", "-in", "client1.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "client1.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
 
     swarmtemplate = (template.render(
         username=args.username,
@@ -102,6 +122,7 @@ try:
         tenantid=os.environ["OS_TENANT_ID"],
         ))
 
+
     with open('swarm.tf', 'w') as swarm:
        swarm.write(swarmtemplate)
 
@@ -117,11 +138,12 @@ try:
     with open('cloud.conf', 'w') as cloudconf:
        cloudconf.write(cloudconfig_template)
 
+
 except Exception as e:
     raise
 else:
     print("-----------------------------")
     print("Config generation succesfull.")
-    print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
+    print("Bootstrapping the cluster can take 2-5 minutes. Please be patient.\n")
     print("To start building the cluster: \nterraform init && terraform plan && terraform apply")
     print("")
