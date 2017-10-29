@@ -4,3 +4,4 @@ config.env
 cloud.conf 
 swarmworker.sh 
 swarmmanager.sh
+swarmbootstrap.sh
