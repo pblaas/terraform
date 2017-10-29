@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __status__ = "Prototype"
 
 import argparse
@@ -144,6 +144,9 @@ except Exception as e:
 else:
     print("-----------------------------")
     print("Config generation succesfull.")
+    print("You can add the following alias to control the new cluster:")
+    print("alias swarm=\"docker --tlsverify --tlscacert="+PATH+"/tls/ca.pem --tlscert="+PATH+"/tls/client1.pem --tlskey="+PATH+"/tls/client1-key.pem -H="+args.floatingip1+":2376\"")
+    print("")
     print("Bootstrapping the cluster can take 2-5 minutes. Please be patient.\n")
     print("To start building the cluster: \nterraform init && terraform plan && terraform apply")
     print("")
