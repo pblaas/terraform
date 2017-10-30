@@ -1,0 +1,20 @@
+rexray:
+  logLevel: debug
+  preempt: true
+libstorage:
+  logging:
+    level: debug
+  # The libstorage.service property directs a libStorage client to direct its
+  # requests to the given service by default. It is not used by the server.
+  service: cinder
+  server:
+    services:
+      cinder:
+        driver: cinder
+cinder:
+  authUrl: https://identity.openstack.cloudvps.com/v3
+  username: 
+  password: 
+  tenantId: 
+  identityApiVersion: 3
+
