@@ -138,6 +138,9 @@ try:
     with open('cloud.conf', 'w') as cloudconf:
        cloudconf.write(cloudconfig_template)
 
+    with open('swarmalias.sh', 'w') as swarmaliassh:
+       swarmaliassh.write("alias swarm=\"docker --tlsverify --tlscacert="+PATH+"/tls/ca.pem --tlscert="+PATH+"/tls/client1.pem --tlskey="+PATH+"/tls/client1-key.pem -H="+args.floatingip1+":2376\"")
+
 
 except Exception as e:
     raise
