@@ -1,6 +1,8 @@
 version: "3"
 
 networks:
+  proxy:
+    external: true        
   monitoring:
 
 services:
@@ -106,6 +108,7 @@ services:
     ports:
       - "3000:3000"
     networks:
+      - proxy
       - monitoring
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GF_PASSWORD:-admin}
