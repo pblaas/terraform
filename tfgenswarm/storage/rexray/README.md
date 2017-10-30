@@ -9,6 +9,7 @@ swarm plugin install rexray/cinder:latest \
   CINDER_TENANTNAME="" \
   CINDER_DOMAINNAME=Default \
   CINDER_REGIONNAME=AMS \
+  CINDER_AVAILABILITYZONENAME=AMS-EQ1 \
   REXRAY_PREEMPT=true \
   REXRAY_LOGLEVEL=debug
 
