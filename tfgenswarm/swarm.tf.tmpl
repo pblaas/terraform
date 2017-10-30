@@ -1,0 +1,276 @@
+provider "openstack" {
+  user_name   = "{{ username }}"
+  tenant_name = "{{ projectname }}"
+  auth_url    = "https://identity.openstack.cloudvps.com:443/v3"
+}
+
+
+resource "openstack_networking_network_v2" "network_{{ clustername }}" {
+  name           = "network_{{ clustername }}"
+  admin_state_up = "true"
+}
+
+resource "openstack_networking_subnet_v2" "subnet_{{ clustername }}" {
+  name       = "subnet_{{ clustername }}"
+  network_id = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
+  cidr       = "{{ subnetcidr }}"
+  ip_version = 4
+}
+
+resource "openstack_networking_router_v2" "swarm_{{ clustername }}_router" {
+  name             = "swarm_{{ clustername }}_router"
+  external_gateway = "f9c73cd5-9e7b-4bfd-89eb-c2f4f584c326"
+}
+
+resource "openstack_networking_router_interface_v2" "swarm_{{ clustername }}_router_interface" {
+  router_id = "${openstack_networking_router_v2.swarm_{{ clustername }}_router.id}"
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+}
+
+
+resource "openstack_networking_secgroup_v2" "secgroup_{{ clustername }}-1" {
+  name        = "secgroup_{{ clustername }}-1"
+  description = "swarm Security group"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-1-1" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "4"
+  port_range_min    = 1
+  port_range_max    = 65535
+  remote_ip_prefix  = "{{ subnetcidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = ["openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-1" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  80
+  port_range_max    =  80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-1-1"
+     ]
+
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-2" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  443
+  port_range_max    =  443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-1"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-3" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  2376
+  port_range_max    =  2376
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-2"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-2-4" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  22
+  port_range_max    =  22
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-3"
+     ]
+}
+
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-1" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  1
+  port_range_max    =  65535
+  remote_ip_prefix  = "{{ subnetcidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-2-4"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-2" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    =  1
+  port_range_max    =  65535
+  remote_ip_prefix  = "{{ subnetcidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-1"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-3-3" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = "{{ subnetcidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-2"
+     ]
+}
+
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-1" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    =  1
+  port_range_max    =  65535
+  remote_ip_prefix  = "{{ calicocidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-3-3"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-2" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    =  1
+  port_range_max    =  65535
+  remote_ip_prefix  = "{{ calicocidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-4-1"
+     ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-3" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = "{{ calicocidr }}"
+  security_group_id = "${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"
+  depends_on = [
+       "openstack_networking_secgroup_rule_v2.secgroup_{{ clustername }}-4-2"
+     ]
+}
+
+
+## Bootstrap resource
+resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_10" {
+  name               = "swarm_{{ clustername }}_port_10"
+  network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
+  admin_state_up     = "true"
+  security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+
+  fixed_ip {
+    "subnet_id"  = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+    "ip_address" = "{{ subnetcidr.rsplit('.', 1)[0] }}.10"
+  }
+}
+
+resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
+  name      = "swarm-{{ clustername }}-node10"
+  availability_zone = "AMS-EQ1"
+  image_name  = "Ubuntu 17.04"
+  flavor_id = "{{ imageflavor }}"
+  key_pair  = "{{ keypair }}"
+  security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+  user_data = "${file("swarmbootstrap.sh")}"
+
+  network {
+    name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_10.id}"
+  }
+}
+
+
+{%- set counter = 10 %}
+{%- for _ in range(counter, counter+managernodes-1) %}
+resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter + loop.index  }}" {
+  name               = "swarm_{{ clustername }}_port_{{ counter + loop.index }}"
+  network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
+  admin_state_up     = "true"
+  security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+
+  fixed_ip {
+    "subnet_id"  = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+    "ip_address" = "{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter + loop.index }}"
+  }
+}
+
+resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter + loop.index }}" {
+  name      = "swarm-{{ clustername }}-node{{ counter + loop.index }}"
+  availability_zone = "AMS-EQ1"
+  image_name  = "Ubuntu 17.04"
+  flavor_id = "{{ imageflavor }}"
+  key_pair  = "{{ keypair }}"
+  security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+  user_data = "${file("swarmmanager.sh")}"
+
+  network {
+    name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_{{ counter + loop.index }}.id}"
+  }
+  depends_on = ["openstack_compute_instance_v2.swarm-{{ clustername }}-node10"]
+}
+{% endfor %}
+
+{%- for _ in range(counter+managernodes, counter+workernodes+managernodes) %}
+resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index -1 }}" {
+  name               = "swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index -1 }}"
+  network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
+  admin_state_up     = "true"
+  security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+
+  fixed_ip {
+    "subnet_id"  = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+    "ip_address" = "{{ subnetcidr.rsplit('.', 1)[0] }}.{{ counter+managernodes + loop.index -1 }}"
+  }
+}
+
+resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index -1 }}" {
+  name      = "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index  -1 }}"
+  availability_zone = "AMS-EQ1"
+  image_name  = "Ubuntu 17.04"
+  flavor_id = "{{ imageflavor }}"
+  key_pair  = "{{ keypair }}"
+  security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+  user_data = "${file("swarmworker.sh")}"
+
+  network {
+    name = "${openstack_networking_network_v2.network_{{ clustername }}.name}"
+    port = "${openstack_networking_port_v2.swarm_{{ clustername }}_port_{{ counter+managernodes + loop.index -1 }}.id}"
+  }
+  depends_on = ["openstack_compute_instance_v2.swarm-{{ clustername }}-node10"]
+}
+{% endfor %}
+
+
+resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f1" {
+  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node10.id}"
+  floating_ip = "{{ floatingip1 }}"
+}
+
+resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
+  instance_id = "${openstack_compute_instance_v2.swarm-{{ clustername }}-node{{ (counter+managernodes+1) }}.id}"
+  floating_ip = "{{ floatingip2 }}"
+}
