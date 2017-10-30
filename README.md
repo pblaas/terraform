@@ -5,7 +5,8 @@ Terraform configurations
 ##### Configurations
 
 * cache_on_demand - Hitch and Varnish caching solution
-* tfgenk8s.py - Python script to generate Terraform file
+* tfgenk8s.py - Python script to generate Terraform file for a kubernetes cluster.
+* tfgenswarm.py - Python script to generate Terraform file for a swarm cluster.
 
 
 ##### Docker
