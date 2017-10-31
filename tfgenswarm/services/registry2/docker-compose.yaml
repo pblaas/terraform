@@ -12,9 +12,9 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
     volumes:
-      - registry-data:/var/lib/registry
-      - registry-certs:/certs
-      - registry-auth:/auth
+      - registry2_registry-data:/var/lib/registry
+      - registry2_registry-certs:/certs
+      - registry2_registry-auth:/auth
     networks:
       - proxy
     deploy:
@@ -30,11 +30,11 @@ services:
         - com.df.serviceDomain=registry2.YOURIP.nip.io
 
 volumes:
-  registry-data:
+  registry2_registry-data:
     driver: rexray/cinder:latest
-  registry-certs:
+  registry2_registry-certs:
     driver: rexray/cinder:latest
-  registry-auth:
+  registry2_registry-auth:
     driver: rexray/cinder:latest
 
 networks:
