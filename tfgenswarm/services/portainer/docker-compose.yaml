@@ -8,7 +8,6 @@ services:
       - 9000:9000
     networks:
       - proxy
-    environment:
     deploy:
       replicas: 1
       placement:
@@ -19,11 +18,18 @@ services:
         - com.df.servicePath=/
         - com.df.port=9000
         - com.df.users=demo:proserve
-        - com.df.serviceDomain=portainer.service.yourdomain.ltd
+        - com.df.serviceDomain=portainer.YOURIP.nip.io
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/ssl:/ssl
+      - data-volume:/data
     command: -H tcp://127.0.0.1:2376 --tlsverify --tlscacert /ssl/certs/ca.pem --tlscert /ssl/certs/swarmserver.pem --tlskey /ssl/private/swarmserver-key.pem
+
+volumes:
+  data-volume:
+    driver: rexray/cinder:latest
+
 networks:
   proxy:
     external: true
+
