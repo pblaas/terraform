@@ -1,6 +1,8 @@
 version: "3.1"
 
 networks:
+  proxy:
+    external: true 
   logging:
   monitoring_monitoring:
     external: true
