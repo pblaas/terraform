@@ -1,5 +1,5 @@
 #!/bin/bash
-docker plugin install rexray/cinder:latest \
+docker plugin install --grant-all-permissions rexray/cinder:latest \
   CINDER_AUTHURL=Default \
   CINDER_USERNAME=Default \
   CINDER_PASSWORD=Default \
