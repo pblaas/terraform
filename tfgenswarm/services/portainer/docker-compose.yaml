@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+
+  portainer:
+    image: portainer/portainer
+    ports:
+      - 9000:9000
+    networks:
+      - proxy
+    environment:
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - com.df.notify=true
+        - com.df.distribute=true
+        - com.df.servicePath=/
+        - com.df.port=9000
+        - com.df.users=demo:proserve
+        - com.df.serviceDomain=portainer.service.yourdomain.ltd
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/ssl:/ssl
+    command: -H tcp://127.0.0.1:2376 --tlsverify --tlscacert /ssl/certs/ca.pem --tlscert /ssl/certs/swarmserver.pem --tlskey /ssl/private/swarmserver-key.pem
+networks:
+  proxy:
+    external: true
