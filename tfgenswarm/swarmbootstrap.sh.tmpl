@@ -36,7 +36,12 @@ echo 'IyNyb290QHN3YXJtLXN3YXJtY2x1c3Rlci1ub2RlMTA6L2V0Yy9zeXN0ZW1kL3N5c3RlbSMgY2
 echo "{{ CAPEM }}" | base64 -di  >/etc/ssl/certs/ca.pem
 echo "{{ SWARMCERT }}" | base64 -di > /etc/ssl/certs/swarmserver.pem
 echo "{{ SWARMKEY }}" | base64 -di  > /etc/ssl/private/swarmserver-key.pem
+echo "{{ REXRAYINSTALL }}" | base64 -di  > /root/rexray_install.sh
 
+sed -i "s/{{ olddns }}/{{ dnsserver }}/g" /etc/resolv.conf
+
+#installing rexray pluging
+sh /root/rexray_install.sh
 systemctl daemon-reload
 systemctl stop docker && systemctl disable docker
 systemctl start docker-tls

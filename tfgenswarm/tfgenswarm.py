@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __status__ = "Prototype"
 
 import argparse
@@ -44,7 +44,7 @@ parser.add_argument("--managernodes", help="Number of swarm manager nodes - (3)"
 parser.add_argument("--workernodes", help="Number of swarm workers nodes - (2)", type=int, default=2)
 parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--cloudprovider", help="Cloud provider support - (openstack)", default="openstack")
-parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", default="v0.8.0")
+parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
 args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('swarm.tf.tmpl')
@@ -53,6 +53,7 @@ openssl_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 worker_template = TEMPLATE_ENVIRONMENT.get_template('swarmworker.sh.tmpl')
 manager_template = TEMPLATE_ENVIRONMENT.get_template('swarmmanager.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
+rexray_template = TEMPLATE_ENVIRONMENT.get_template('./storage/rexray/rexray_install.sh.tmpl')
 
 try:
     if args.managernodes < 3:
@@ -91,6 +92,18 @@ try:
         floatingip2=args.floatingip2,
         ))
 
+    rexray_template = (rexray_template.render(
+        authurl=os.environ["OS_AUTH_URL"],
+        username=args.username,
+        password=os.environ["OS_PASSWORD"],
+        region=os.environ["OS_REGION_NAME"],
+        projectname=args.projectname,
+        tenantid=os.environ["OS_TENANT_ID"],
+        ))
+
+    with open('./storage/rexray/rexray_install.sh', 'w') as rexray:
+       rexray.write(rexray_template)
+
 
     buffer = open('./tls/ca.pem', 'rU').read()
     CAPEM=base64.b64encode(buffer)
@@ -98,19 +111,30 @@ try:
     SWARMCERT=base64.b64encode(buffer)
     buffer = open('./tls/swarmserver-key.pem', 'rU').read()
     SWARMKEY=base64.b64encode(buffer)
+    buffer = open('./storage/rexray/rexray_install.sh', 'rU').read()
+    REXRAYINSTALL=base64.b64encode(buffer)
 
     bootstrap_template = (bootstrap_template.render(
         CAPEM=CAPEM,
         SWARMCERT=SWARMCERT,
-        SWARMKEY=SWARMKEY
+        SWARMKEY=SWARMKEY,
+        REXRAYINSTALL=REXRAYINSTALL,
+        olddns=(args.subnetcidr).rsplit('.', 1)[0]+".2",
+        dnsserver=args.dnsserver
         ))
 
     worker_template = (worker_template.render(
         bootstrapmaster=(args.subnetcidr).rsplit('.', 1)[0]+".10",
+        olddns=(args.subnetcidr).rsplit('.', 1)[0]+".2",
+        REXRAYINSTALL=REXRAYINSTALL,
+        dnsserver=args.dnsserver
         ))
 
     manager_template = (manager_template.render(
         bootstrapmaster=(args.subnetcidr).rsplit('.', 1)[0]+".10",
+        olddns=(args.subnetcidr).rsplit('.', 1)[0]+".2",
+        REXRAYINSTALL=REXRAYINSTALL,
+        dnsserver=args.dnsserver
         ))
 
     cloudconfig_template = (cloudconfig_template.render(
@@ -140,6 +164,7 @@ try:
 
     with open('swarmalias.sh', 'w') as swarmaliassh:
        swarmaliassh.write("alias swarm=\"docker --tlsverify --tlscacert="+PATH+"/tls/ca.pem --tlscert="+PATH+"/tls/client1.pem --tlskey="+PATH+"/tls/client1-key.pem -H="+args.floatingip1+":2376\"")
+
 
 
 except Exception as e:
