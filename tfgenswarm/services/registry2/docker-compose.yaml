@@ -27,7 +27,7 @@ services:
         - com.df.distribute=true
         - com.df.servicePath=/
         - com.df.port=5000
-        - com.df.serviceDomain=portainer.YOURIP.nip.io
+        - com.df.serviceDomain=registry2.YOURIP.nip.io
 
 volumes:
   registry-data:
