@@ -5,3 +5,4 @@ cloud.conf
 swarmworker.sh 
 swarmmanager.sh
 swarmbootstrap.sh
+swarmalias.sh

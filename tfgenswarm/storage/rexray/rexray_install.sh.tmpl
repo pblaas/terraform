@@ -1,0 +1,13 @@
+#!/bin/bash
+docker plugin install --grant-all-permissions rexray/cinder:latest \
+  CINDER_AUTHURL={{ authurl }} \
+  CINDER_USERNAME={{ username }} \
+  CINDER_PASSWORD={{ password }} \
+  CINDER_TENANTID={{ tenantid }} \
+  CINDER_TENANTNAME="{{ projectname }}" \
+  CINDER_DOMAINNAME=Default \
+  CINDER_REGIONNAME={{ region }} \
+  CINDER_AVAILABILITYZONENAME=AMS-EQ1 \
+  REXRAY_PREEMPT=true \
+  REXRAY_LOGLEVEL=debug
+
