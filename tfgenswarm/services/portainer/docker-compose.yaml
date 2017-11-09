@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+
+  portainer:
+    image: portainer/portainer
+    ports:
+      - 9000:9000
+    networks:
+      - proxy
+    deploy:
+      replicas: 1
+      placement:
+        constraints: 
+          - node.role == manager
+          - node.hostname != swarm-swarmcluster-node10
+      labels:
+        - com.df.notify=true
+        - com.df.distribute=true
+        - com.df.servicePath=/
+        - com.df.port=9000
+        - com.df.serviceDomain=portainer.YOURIP.nip.io
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - data-volume:/data
+    command: -H unix:///var/run/docker.sock 
+
+volumes:
+  data-volume:
+    driver: rexray/cinder:latest
+
+networks:
+  proxy:
+    external: true
+

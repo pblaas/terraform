@@ -1,6 +1,8 @@
 version: "3.1"
 
 networks:
+  proxy:
+    external: true 
   logging:
   monitoring_monitoring:
     external: true
@@ -84,6 +86,7 @@ services:
   kibana:
     image: kibana:4
     networks:
+      - proxy
       - logging
     ports:
       - "5601:5601"
@@ -91,6 +94,13 @@ services:
       - LOGSPOUT=ignore
       - ELASTICSEARCH_URL=http://elasticsearch:9200
     deploy:
+      labels:
+        - com.df.notify=true
+        - com.df.distribute=true
+        - com.df.servicePath=/
+        - com.df.port=5601
+        - com.df.users=demo:proserve
+        - com.df.serviceDomain=kibana.YOURIP.nip.io
       mode: replicated
       replicas: 1
       resources:
@@ -100,3 +110,4 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+
