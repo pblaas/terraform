@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.6.5"
+__version__ = "0.6.6"
 __status__ = "Prototype"
 
 import argparse
@@ -89,7 +89,6 @@ try:
         corepassword=args.corepassword,
         subnetcidr=args.subnetcidr,
         calicocidr=args.calicocidr,
-        alicocidr=args.calicocidr,
         masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10",
         masterhostgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
         workergw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
