@@ -26,8 +26,11 @@ services:
       - DF_NOTIFY_REMOVE_SERVICE_URL=http://proxy:8080/v1/docker-flow-proxy/remove
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: 
+          - node.role == manager
+          - node.hostname != swarm-swarmcluster-node10
 
 networks:
   proxy:
     external: true
+
