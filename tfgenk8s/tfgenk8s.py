@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.6.7"
+__version__ = "0.6.8"
 __status__ = "Prototype"
 
 import argparse
@@ -47,7 +47,7 @@ parser.add_argument("--cloudprovider", help="Cloud provider support - (openstack
 parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.9_coreos.0)", default="v1.7.9_coreos.0")
 parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", default="v0.8.0")
 parser.add_argument("--netoverlay", help="Network overlay - (flannel)", default="flannel")
-parser.add_argument("--authmode", help="Authorization mode - ()", default="")
+parser.add_argument("--authmode", help="Authorization mode - (AlwaysAllow)", default="AlwaysAllow")
 parser.add_argument("--gitbranch", help="Cloudinit_generator branch - (master)", default="master")
 parser.add_argument("--sshkey1", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
 parser.add_argument("--sshkey2", help="SSH key for remote access", default="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDlVWpAjJGhyyYnJxmGf6UHSs7mr4he47uovH6noiVyk/qUgreNQH5F/WVGPcRGqtE8Mc1aonDtWSjxxRlT62x3M9rkP4px48dTigUUFPGhhDTeEjyTqKbzedo/17T0CHVjuQkXl9+m/I7AZPmPBaJEb4knkr++B6tnZa65MjA98w==")
