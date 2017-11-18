@@ -58,13 +58,55 @@ config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
 controller_template = TEMPLATE_ENVIRONMENT.get_template('controller.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
+openssl_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 
 try:
+    #Create CA certificates
+    def createCaCert():
+            print("CA")
+            subprocess.call(["openssl", "genrsa", "-out", "ca-key.pem", "2048"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "ca-key.pem", "-days", "10000", "-out", "ca.pem", "-subj", "/CN=k8s-ca"], cwd='./tls')
+
+            print("etcd CA")
+            subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
+
+    #Create node certificates
+    def createNodeCert(node):
+            print("received: " + node)
+            subprocess.call(["openssl", "genrsa", "-out", node +"-k8s-node-key.pem", "2048"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-new", "-key", node +"-k8s-node-key.pem", "-out", node +"-k8s-node.csr", "-subj", "/CN=system:node:"+node+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
+            subprocess.call(["openssl", "x509", "-req", "-in", node +"-k8s-node.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", node+"-k8s-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
+            # ${i}-etcd-worker.pem
+            subprocess.call(["openssl", "genrsa", "-out", node +"-etcd-node-key.pem", "2048"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-new", "-key", node +"-etcd-node-key.pem", "-out", node +"-etcd-node.csr", "-subj", "/CN="+node+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
+            subprocess.call(["openssl", "x509", "-req", "-in", node +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", node+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
+
+
+    #Create client certificates
+    def createClientCert(user):
+            print("client: " + user)
+            subprocess.call(["openssl", "genrsa", "-out", user +"-key.pem", "2048"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-new", "-key", user +"-key.pem", "-out", user+".csr", "-subj", "/CN="+user+"/O=system:masters", "-config", "openssl.cnf"], cwd='./tls')
+            subprocess.call(["openssl", "x509", "-req", "-in", user+".csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", user+".pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
 
+    openssltemplate = (openssl_template.render(
+        floatingip1=args.floatingip1,
+        loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
+        ))
+
+    with open('./tls/openssl.cnf', 'w') as openssl:
+       openssl.write(openssltemplate)
+
+    createCaCert()
+
     with open('k8s_floating_ip.txt', 'w') as k8sfip:
-       k8sfip.write(args.floatingip1)
+        k8sfip.write(args.floatingip1)
 
     k8stemplate = (template.render(
         username=args.username,
@@ -81,24 +123,37 @@ try:
         floatingip2=args.floatingip2,
         ))
 
-    controller_template = (controller_template.render(
-        dnsserver=args.dnsserver,
-        floatingip1=args.floatingip1,
-        k8sver=args.k8sver,
-        flannelver=args.flannelver,
-        netoverlay=args.netoverlay,
-        cloudprovider=args.cloudprovider,
-        authmode=args.authmode,
-        clustername=args.clustername,
-        subnetcidr=args.subnetcidr,
-        calicocidr=args.calicocidr,
-        ipaddress=(args.subnetcidr).rsplit('.', 1)[0]+".10",
-        ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
-        ))
+    list=""
+    for node in range(10,args.managers+10):
+        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ",")
+        list = list + apiserver
 
-    with open('master.yaml', 'w') as controller:
-       controller.write(controller_template)
+    print("Apiservers: "+ list.rstrip(','))
 
+    for node in range(10,args.managers+10):
+        lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
+        nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
+        createNodeCert(lanip)
+        master_template = (controller_template.render(
+           dnsserver=args.dnsserver,
+           etcdendpointsurls=list.rstrip(','),
+           floatingip1=args.floatingip1,
+           k8sver=args.k8sver,
+           flannelver=args.flannelver,
+           netoverlay=args.netoverlay,
+           cloudprovider=args.cloudprovider,
+           authmode=args.authmode,
+           clustername=args.clustername,
+           subnetcidr=args.subnetcidr,
+           calicocidr=args.calicocidr,
+           ipaddress=lanip,
+           ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
+           ))
+
+        with open(nodeyaml, 'w') as controller:
+          controller.write(master_template)
+
+    '''
     k8sconfig_template = (config_template.render(
         dnsserver=args.dnsserver,
         floatingip1=args.floatingip1,
@@ -120,6 +175,7 @@ try:
         workerip2=(args.subnetcidr).rsplit('.', 1)[0]+".12",
         ))
 
+    '''
 
     kubeconfig_template = (kubeconfig_template.render(
         floatingip1=args.floatingip1,
@@ -137,9 +193,10 @@ try:
 
     with open('kubeconfig.sh', 'w') as kubeconfig:
         kubeconfig.write(kubeconfig_template)
-
+    '''
     with open('config.env', 'w') as k8sconfig:
         k8sconfig.write(k8sconfig_template)
+    '''
 
     with open('k8s.tf', 'w') as k8s:
        k8s.write(k8stemplate)
@@ -157,15 +214,16 @@ try:
     with open('k8s_cluster_ips.txt', 'w') as k8scips:
        k8scips.write(str(list))
 
+    '''
+    subprocess.call(["git", "clone", "-b", args.gitbranch, "https://github.com/pblaas/cloudinit_generator.git"])
+    subprocess.call(["cp", "-v", "config.env", "./cloudinit_generator"])
+    subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
 
-    #subprocess.call(["git", "clone", "-b", args.gitbranch, "https://github.com/pblaas/cloudinit_generator.git"])
-    #subprocess.call(["cp", "-v", "config.env", "./cloudinit_generator"])
-    #subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
-
-    #if len(listArray) > 3:
-    #    for i in range(3, len(listArray)):
-    #        ip = listArray[i]
-    #        subprocess.check_call(['./add_node.sh', ip], cwd='./cloudinit_generator')
+    if len(listArray) > 3:
+        for i in range(3, len(listArray)):
+            ip = listArray[i]
+            subprocess.check_call(['./add_node.sh', ip], cwd='./cloudinit_generator')
+    '''
 
 except Exception as e:
     raise
@@ -175,3 +233,4 @@ else:
     print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
     print("To start building the cluster: \nterraform init && terraform plan && terraform apply && sh snat_acl.sh")
     print("To interact with the cluster: \nsh kubeconfig.sh")
+
