@@ -1,3 +1,0 @@
-keypair=""
-username=""
-tenantname=""
