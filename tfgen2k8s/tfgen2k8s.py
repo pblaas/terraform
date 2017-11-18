@@ -55,6 +55,7 @@ args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
 config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
+controller_template = TEMPLATE_ENVIRONMENT.get_template('controller.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 
@@ -80,6 +81,24 @@ try:
         floatingip2=args.floatingip2,
         ))
 
+    controller_template = (controller_template.render(
+        dnsserver=args.dnsserver,
+        floatingip1=args.floatingip1,
+        k8sver=args.k8sver,
+        flannelver=args.flannelver,
+        netoverlay=args.netoverlay,
+        cloudprovider=args.cloudprovider,
+        authmode=args.authmode,
+        clustername=args.clustername,
+        subnetcidr=args.subnetcidr,
+        calicocidr=args.calicocidr,
+        ipaddress=(args.subnetcidr).rsplit('.', 1)[0]+".10",
+        ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
+        ))
+
+    with open('master.yaml', 'w') as controller:
+       controller.write(controller_template)
+
     k8sconfig_template = (config_template.render(
         dnsserver=args.dnsserver,
         floatingip1=args.floatingip1,
@@ -100,6 +119,7 @@ try:
         workerip1=(args.subnetcidr).rsplit('.', 1)[0]+".11",
         workerip2=(args.subnetcidr).rsplit('.', 1)[0]+".12",
         ))
+
 
     kubeconfig_template = (kubeconfig_template.render(
         floatingip1=args.floatingip1,
