@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.6.8"
+__version__ = "0.6.9"
 __status__ = "Prototype"
 
 import argparse
@@ -88,6 +88,7 @@ try:
         sshkey2=args.sshkey2,
         cloudprovider=args.cloudprovider,
         authmode=args.authmode,
+        clustername=args.clustername,
         corepassword=args.corepassword,
         subnetcidr=args.subnetcidr,
         calicocidr=args.calicocidr,
