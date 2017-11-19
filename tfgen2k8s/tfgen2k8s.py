@@ -9,6 +9,7 @@ import os
 import subprocess
 import httplib
 import base64
+import gzip
 from jinja2 import Environment, Template, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))

@@ -465,13 +465,13 @@ write_files:
     encoding: "base64"
     owner: "root"
     content: |
-      {{ k8snodekeybase64 }} 
+      {{ k8snodekeybase64 }}
   - path: "/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ k8snodebase64 }} 
+      {{ k8snodebase64 }}
   - path: "/etc/kubernetes/ssl/ca.pem"
     permissions: "0664"
     encoding: "base64"
@@ -489,43 +489,43 @@ write_files:
     encoding: "base64"
     owner: "root"
     content: |
-      {{ etcdnodebase64 }} 
+      {{ etcdnodebase64 }}
   - path: "/etc/kubernetes/ssl/etcd-ca.pem"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ etcdcabase64 }} 
+      {{ etcdcabase64 }}
   - path: "/etc/ssl/certs/{{ ipaddress }}-etcd-node-key.pem"
     permissions: "0644"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ etcdnodekeybase64 }} 
+      {{ etcdnodekeybase64 }}
   - path: "/etc/ssl/certs/{{ ipaddress }}-etcd-node.pem"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ etcdnodebase64 }} 
+      {{ etcdnodebase64 }}
   - path: "/etc/ssl/certs/etcd-ca.pem"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ etcdcabase64 }} 
+      {{ etcdcabase64 }}
   - path: "/etc/kubernetes/cloud.conf"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ cloudconfbase64 }} 
+      {{ cloudconfbase64 }}
   - path: "/etc/kubernetes/ssl/cloud.conf"
     permissions: "0664"
     encoding: "base64"
     owner: "root"
     content: |
-      {{ cloudconfbase64 }} 
+      {{ cloudconfbase64 }}
   - path: /etc/motd.d/k8s.conf
     owner: "root"
     permissions: "0644"
