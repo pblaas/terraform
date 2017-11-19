@@ -7,6 +7,7 @@ __status__ = "Prototype"
 import argparse
 import os
 import subprocess
+import httplib
 from jinja2 import Environment, Template, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -74,16 +75,15 @@ try:
     #Create node certificates
     def createNodeCert(node):
             print("received: " + node)
+            nodeoctet=node.rsplit('.')[3]
             subprocess.call(["openssl", "genrsa", "-out", node +"-k8s-node-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-new", "-key", node +"-k8s-node-key.pem", "-out", node +"-k8s-node.csr", "-subj", "/CN=system:node:"+node+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
+            subprocess.call(["openssl", "req", "-new", "-key", node +"-k8s-node-key.pem", "-out", node +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(args.clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
             subprocess.call(["openssl", "x509", "-req", "-in", node +"-k8s-node.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", node+"-k8s-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
             # ${i}-etcd-worker.pem
             subprocess.call(["openssl", "genrsa", "-out", node +"-etcd-node-key.pem", "2048"], cwd='./tls')
             subprocess.call(["openssl", "req", "-new", "-key", node +"-etcd-node-key.pem", "-out", node +"-etcd-node.csr", "-subj", "/CN="+node+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
             subprocess.call(["openssl", "x509", "-req", "-in", node +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", node+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
-
-
 
     #Create client certificates
     def createClientCert(user):
@@ -92,8 +92,16 @@ try:
             subprocess.call(["openssl", "req", "-new", "-key", user +"-key.pem", "-out", user+".csr", "-subj", "/CN="+user+"/O=system:masters", "-config", "openssl.cnf"], cwd='./tls')
             subprocess.call(["openssl", "x509", "-req", "-in", user+".csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", user+".pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
+    def createClusterId():
+            discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
+            discoversize="/new?size="+ str(args.managers)
+            discoverurl.request("GET", discoversize)
+            return discoverurl.getresponse().read()
+
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
+
+    createClusterId()
 
     openssltemplate = (openssl_template.render(
         floatingip1=args.floatingip1,
@@ -233,4 +241,3 @@ else:
     print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
     print("To start building the cluster: \nterraform init && terraform plan && terraform apply && sh snat_acl.sh")
     print("To interact with the cluster: \nsh kubeconfig.sh")
-
