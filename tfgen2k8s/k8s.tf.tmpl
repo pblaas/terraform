@@ -252,6 +252,6 @@ variable "workers" {
 
 resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
   instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node13.id}"
-  count = "${var.workers ? 1 : 0}" 
+  count = "${var.workers > 0 ? 1 : 0}" 
   floating_ip = "{{ floatingip2 }}"
 }
