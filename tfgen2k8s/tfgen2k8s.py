@@ -158,7 +158,7 @@ try:
 
     list=""
     for node in range(10,args.managers+10):
-        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ",")
+        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
         list = list + apiserver
 
     print("Apiservers: "+ list.rstrip(','))
