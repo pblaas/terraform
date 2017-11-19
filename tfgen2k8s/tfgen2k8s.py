@@ -177,6 +177,7 @@ try:
         etcdnodekeybase64=base64.b64encode(buffer)
 
         master_template = (controller_template.render(
+           workers=args.workers,
            dnsserver=args.dnsserver,
            etcdendpointsurls=list.rstrip(','),
            floatingip1=args.floatingip1,
