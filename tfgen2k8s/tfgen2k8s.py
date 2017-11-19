@@ -43,7 +43,7 @@ parser.add_argument("--clustername", help="Clustername - (k8scluster)", default=
 parser.add_argument("--subnetcidr", help="Private subnet CIDR - (192.168.3.0/24)", default="192.168.3.0/24")
 parser.add_argument("--calicocidr", help="Calico subnet CIDR - (10.244.0.0/16)", default="10.244.0.0/16")
 parser.add_argument("--managers", help="Number of k8s managers - (3)", type=int, default=3)
-parser.add_argument("--workers", help="Number of k8s workers - (2)", type=int, default=2)
+parser.add_argument("--workers", help="Number of k8s workers - (0)", type=int, default=0)
 parser.add_argument("--managerimageflavor", help="Manager image flavor ID - (2007)", type=int, default=2007)
 parser.add_argument("--workerimageflavor", help="Worker image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
@@ -251,17 +251,6 @@ try:
 
     with open('k8s_cluster_ips.txt', 'w') as k8scips:
        k8scips.write(str(list))
-
-    '''
-    subprocess.call(["git", "clone", "-b", args.gitbranch, "https://github.com/pblaas/cloudinit_generator.git"])
-    subprocess.call(["cp", "-v", "config.env", "./cloudinit_generator"])
-    subprocess.check_call('echo YES | ./create_cloudinit.sh', shell=True, cwd='./cloudinit_generator')
-
-    if len(listArray) > 3:
-        for i in range(3, len(listArray)):
-            ip = listArray[i]
-            subprocess.check_call(['./add_node.sh', ip], cwd='./cloudinit_generator')
-    '''
 
 except Exception as e:
     raise
