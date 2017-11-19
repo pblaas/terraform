@@ -52,7 +52,6 @@ parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.9_coreos.0)", de
 parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", default="v0.8.0")
 parser.add_argument("--netoverlay", help="Network overlay - (flannel)", default="flannel")
 parser.add_argument("--authmode", help="Authorization mode - (AlwaysAllow)", default="AlwaysAllow")
-parser.add_argument("--gitbranch", help="Cloudinit_generator branch - (master)", default="master")
 args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
