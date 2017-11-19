@@ -76,6 +76,16 @@ try:
     #Create node certificates
     def createNodeCert(node):
             print("received: " + node)
+
+            openssltemplate = (openssl_template.render(
+                floatingip1=args.floatingip1,
+                ipaddress=node,
+                loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
+                ))
+
+            with open('./tls/openssl.cnf', 'w') as openssl:
+               openssl.write(openssltemplate)
+
             nodeoctet=node.rsplit('.')[3]
             subprocess.call(["openssl", "genrsa", "-out", node +"-k8s-node-key.pem", "2048"], cwd='./tls')
             subprocess.call(["openssl", "req", "-new", "-key", node +"-k8s-node-key.pem", "-out", node +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(args.clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
@@ -103,14 +113,6 @@ try:
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
 
-
-    openssltemplate = (openssl_template.render(
-        floatingip1=args.floatingip1,
-        loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
-        ))
-
-    with open('./tls/openssl.cnf', 'w') as openssl:
-       openssl.write(openssltemplate)
 
     discovery_id=createClusterId()
     createCaCert()
