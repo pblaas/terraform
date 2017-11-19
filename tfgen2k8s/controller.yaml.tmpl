@@ -279,13 +279,13 @@ write_files:
           - --secure-port=443
           - --advertise-address={{ ipaddress }}
           - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction
-          - --tls-cert-file=/etc/kubernetes/ssl/{{ ipaddress }}.pem
-          - --tls-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-key.pem
+          - --tls-cert-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
+          - --tls-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --service-account-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-key.pem
+          - --service-account-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --runtime-config=extensions/v1beta1/networkpolicies=true
-          - --kubelet-client-certificate=/etc/kubernetes/ssl/{{ ipaddress }}.pem
-          - --kubelet-client-key=/etc/kubernetes/ssl/{{ ipaddress }}-key.pem
+          - --kubelet-client-certificate=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
+          - --kubelet-client-key=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --anonymous-auth=false
           - --authorization-mode={{ authmode }}
           - --v=4
