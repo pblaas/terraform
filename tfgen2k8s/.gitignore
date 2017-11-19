@@ -1,0 +1,12 @@
+*.txt 
+*.tf 
+*.yaml
+config.env 
+kubeconfig.sh 
+cloud.conf 
+tls/*.pem 
+tls/*.cnf 
+tls/*.csr 
+tls/*.srl
+
+
