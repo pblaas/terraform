@@ -245,8 +245,13 @@ resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f1" 
   floating_ip = "{{ floatingip1 }}"
 }
 
+variable "workers" {
+  description = "worker count"
+  default = {{ workers }}
+}
+
 resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" {
   instance_id = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node13.id}"
-  count = {{ workers }}
+  count = "${var.workers ? 1 : 0}" 
   floating_ip = "{{ floatingip2 }}"
 }
