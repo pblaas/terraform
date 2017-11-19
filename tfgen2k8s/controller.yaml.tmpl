@@ -247,8 +247,8 @@ write_files:
     content: |
       FLANNELD_IFACE={{ ipaddress }}
       FLANNELD_ETCD_ENDPOINTS={{ etcdendpointsurls }}
-      FLANNELD_ETCD_KEYFILE=/etc/ssl/certs/etcd-{{ ipaddress }}-key.pem
-      FLANNELD_ETCD_CERTFILE=/etc/ssl/certs/etcd-{{ ipaddress }}.pem
+      FLANNELD_ETCD_KEYFILE=/etc/ssl/certs/{{ ipaddress }}-etcd-node-key.pem
+      FLANNELD_ETCD_CERTFILE=/etc/ssl/certs/{{ ipaddress }}-etcd-node.pem
       FLANNELD_ETCD_CAFILE=/etc/ssl/certs/etcd-ca.pem
       FLANNEL_IMAGE_TAG={{ flannelver }}
   - path: "/etc/kubernetes/manifests/kube-apiserver.yaml"
