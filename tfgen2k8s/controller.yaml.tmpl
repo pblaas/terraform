@@ -271,8 +271,8 @@ write_files:
           - --bind-address=0.0.0.0
           - --etcd-servers={{ etcdendpointsurls }}
           - --etcd-cafile=/etc/kubernetes/ssl/etcd-ca.pem
-          - --etcd-certfile=/etc/kubernetes/ssl/etcd-{{ ipaddress }}.pem
-          - --etcd-keyfile=/etc/kubernetes/ssl/etcd-{{ ipaddress }}-key.pem
+          - --etcd-certfile=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem
+          - --etcd-keyfile=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem
           - --allow-privileged=true
           - --storage-backend=etcd2
           - --service-cluster-ip-range=10.3.0.0/24
