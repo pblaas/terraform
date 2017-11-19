@@ -8,6 +8,7 @@ import argparse
 import os
 import subprocess
 import httplib
+import base64
 from jinja2 import Environment, Template, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -85,6 +86,7 @@ try:
             subprocess.call(["openssl", "req", "-new", "-key", node +"-etcd-node-key.pem", "-out", node +"-etcd-node.csr", "-subj", "/CN="+node+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
             subprocess.call(["openssl", "x509", "-req", "-in", node +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", node+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
+
     #Create client certificates
     def createClientCert(user):
             print("client: " + user)
@@ -101,7 +103,6 @@ try:
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
 
-    createClusterId()
 
     openssltemplate = (openssl_template.render(
         floatingip1=args.floatingip1,
@@ -111,10 +112,32 @@ try:
     with open('./tls/openssl.cnf', 'w') as openssl:
        openssl.write(openssltemplate)
 
+    discovery_id=createClusterId()
     createCaCert()
+
+    buffer = open('./tls/ca.pem', 'rU').read()
+    CAPEM=base64.b64encode(buffer)
+
+    buffer = open('./tls/etcd-ca.pem', 'rU').read()
+    ETCDCAPEM=base64.b64encode(buffer)
 
     with open('k8s_floating_ip.txt', 'w') as k8sfip:
         k8sfip.write(args.floatingip1)
+
+    cloudconfig_template = (cloudconfig_template.render(
+        authurl=os.environ["OS_AUTH_URL"],
+        username=args.username,
+        password=os.environ["OS_PASSWORD"],
+        region=os.environ["OS_REGION_NAME"],
+        projectname=args.projectname,
+        tenantid=os.environ["OS_TENANT_ID"],
+        ))
+
+    with open('cloud.conf', 'w') as cloudconf:
+       cloudconf.write(cloudconfig_template)
+
+    buffer = open('cloud.conf', 'rU').read()
+    cloudconfbase64=base64.b64encode(buffer)
 
     k8stemplate = (template.render(
         username=args.username,
@@ -142,6 +165,15 @@ try:
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
         createNodeCert(lanip)
+        buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
+        k8snodebase64=base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
+        k8snodekeybase64=base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
+        etcdnodebase64=base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
+        etcdnodekeybase64=base64.b64encode(buffer)
+
         master_template = (controller_template.render(
            dnsserver=args.dnsserver,
            etcdendpointsurls=list.rstrip(','),
@@ -156,6 +188,14 @@ try:
            calicocidr=args.calicocidr,
            ipaddress=lanip,
            ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
+           discoveryid=discovery_id,
+           cabase64=CAPEM,
+           etcdcabase64=ETCDCAPEM,
+           k8snodebase64=k8snodebase64,
+           k8snodekeybase64=k8snodekeybase64,
+           etcdnodebase64=etcdnodebase64,
+           etcdnodekeybase64=etcdnodekeybase64,
+           cloudconfbase64=cloudconfbase64,
            ))
 
         with open(nodeyaml, 'w') as controller:
@@ -190,14 +230,6 @@ try:
         masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10"
         ))
 
-    cloudconfig_template = (cloudconfig_template.render(
-        authurl=os.environ["OS_AUTH_URL"],
-        username=args.username,
-        password=os.environ["OS_PASSWORD"],
-        region=os.environ["OS_REGION_NAME"],
-        projectname=args.projectname,
-        tenantid=os.environ["OS_TENANT_ID"],
-        ))
 
     with open('kubeconfig.sh', 'w') as kubeconfig:
         kubeconfig.write(kubeconfig_template)
@@ -209,8 +241,6 @@ try:
     with open('k8s.tf', 'w') as k8s:
        k8s.write(k8stemplate)
 
-    with open('cloud.conf', 'w') as cloudconf:
-       cloudconf.write(cloudconfig_template)
 
     list=""
     listArray=[]

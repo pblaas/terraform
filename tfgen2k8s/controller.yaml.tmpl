@@ -3,19 +3,19 @@
 hostname: "{{ ipaddress }}"
 coreos:
   flannel:
-    interface: {{ ipaddress }} 
+    interface: {{ ipaddress }}
   etcd2:
-    discovery: https://discovery.etcd.io/DISCOVERY_ID
+    discovery: {{ discoveryid }}
     advertise-client-urls: https://{{ ipaddress }}:2379
     initial-advertise-peer-urls: https://{{ ipaddress }}:2380
     listen-client-urls: http://127.0.0.1:2379,https://{{ ipaddress }}:2379
     listen-peer-urls: https://{{ ipaddress }}:2380
-    cert-file: /etc/kubernetes/ssl/etcd-{{ ipaddress }}.pem
-    key-file: /etc/kubernetes/ssl/etcd-{{ ipaddress }}-key.pem
+    cert-file: /etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem
+    key-file: /etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem
     trusted-ca-file: /etc/kubernetes/ssl/etcd-ca.pem
     client-cert-auth: true
-    peer-cert-file: /etc/kubernetes/ssl/etcd-{{ ipaddress }}.pem
-    peer-key-file: /etc/kubernetes/ssl/etcd-{{ ipaddress }}-key.pem
+    peer-cert-file: /etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem
+    peer-key-file: /etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem
     peer-trusted-ca-file: /etc/kubernetes/ssl/etcd-ca.pem
     peer-client-cert-auth: true
   fleet:
@@ -460,72 +460,72 @@ write_files:
         - name: "etc-kube-ssl"
           hostPath:
             path: "/etc/kubernetes/ssl"
-  - path: "/etc/kubernetes/ssl/{{ ipaddress }}-key.pem"
+  - path: "/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem"
     permissions: "0600"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      APISERVERKEY
-  - path: "/etc/kubernetes/ssl/{{ ipaddress }}.pem"
+      {{ k8snodekeybase64 }} 
+  - path: "/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      APISERVER
+      {{ k8snodebase64 }} 
   - path: "/etc/kubernetes/ssl/ca.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      CACERT
-  - path: "/etc/kubernetes/ssl/etcd-{{ ipaddress }}-key.pem"
+      {{ cabase64 }}
+  - path: "/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem"
     permissions: "0644"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDAPISERVERKEY
-  - path: "/etc/kubernetes/ssl/etcd-{{ ipaddress }}.pem"
+      {{ etcdnodekeybase64 }}
+  - path: "/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDAPISERVER
+      {{ etcdnodebase64 }} 
   - path: "/etc/kubernetes/ssl/etcd-ca.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDCACERT
-  - path: "/etc/ssl/certs/etcd-{{ ipaddress }}-key.pem"
+      {{ etcdcabase64 }} 
+  - path: "/etc/ssl/certs/{{ ipaddress }}-etcd-node-key.pem"
     permissions: "0644"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDAPISERVERKEY
-  - path: "/etc/ssl/certs/etcd-{{ ipaddress }}.pem"
+      {{ etcdnodekeybase64 }} 
+  - path: "/etc/ssl/certs/{{ ipaddress }}-etcd-node.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDAPISERVER
+      {{ etcdnodebase64 }} 
   - path: "/etc/ssl/certs/etcd-ca.pem"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      ETCDCACERT
+      {{ etcdcabase64 }} 
   - path: "/etc/kubernetes/cloud.conf"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      CLOUDCONF
+      {{ cloudconfbase64 }} 
   - path: "/etc/kubernetes/ssl/cloud.conf"
     permissions: "0664"
-    encoding: "gzip+base64"
+    encoding: "base64"
     owner: "root"
     content: |
-      CLOUDCONF
+      {{ cloudconfbase64 }} 
   - path: /etc/motd.d/k8s.conf
     owner: "root"
     permissions: "0644"
@@ -546,8 +546,8 @@ write_files:
       users:
       - name: kubelet
         user:
-          client-certificate: /etc/kubernetes/ssl/{{ ipaddress }}.pem
-          client-key: /etc/kubernetes/ssl/{{ ipaddress }}-key.pem
+          client-certificate: /etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
+          client-key: /etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
       contexts:
       - context:
           cluster: local
