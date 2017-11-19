@@ -200,29 +200,8 @@ try:
         with open(nodeyaml, 'w') as controller:
           controller.write(master_template)
 
-    '''
-    k8sconfig_template = (config_template.render(
-        dnsserver=args.dnsserver,
-        floatingip1=args.floatingip1,
-        k8sver=args.k8sver,
-        flannelver=args.flannelver,
-        netoverlay=args.netoverlay,
-        sshkey1="none",
-        sshkey2="none",
-        cloudprovider=args.cloudprovider,
-        authmode=args.authmode,
-        clustername=args.clustername,
-        corepassword="password",
-        subnetcidr=args.subnetcidr,
-        calicocidr=args.calicocidr,
-        masterhostip=(args.subnetcidr).rsplit('.', 1)[0]+".10",
-        masterhostgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
-        workergw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
-        workerip1=(args.subnetcidr).rsplit('.', 1)[0]+".11",
-        workerip2=(args.subnetcidr).rsplit('.', 1)[0]+".12",
-        ))
-
-    '''
+    #creating admin certificate
+    createClientCert("admin")
 
     kubeconfig_template = (kubeconfig_template.render(
         floatingip1=args.floatingip1,
@@ -232,14 +211,9 @@ try:
 
     with open('kubeconfig.sh', 'w') as kubeconfig:
         kubeconfig.write(kubeconfig_template)
-    '''
-    with open('config.env', 'w') as k8sconfig:
-        k8sconfig.write(k8sconfig_template)
-    '''
 
     with open('k8s.tf', 'w') as k8s:
        k8s.write(k8stemplate)
-
 
     list=""
     listArray=[]
