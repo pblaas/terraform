@@ -1,16 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
+"""Kubernetes cluster generator."""
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
 __version__ = "0.0.1"
 __status__ = "Prototype"
 
+
 import argparse
+import httplib
 import os
 import subprocess
-import httplib
 import base64
-import gzip
-from jinja2 import Environment, Template, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_ENVIRONMENT = Environment(
@@ -18,20 +19,19 @@ TEMPLATE_ENVIRONMENT = Environment(
     loader=FileSystemLoader(os.path.join(PATH, '.')),
     trim_blocks=False)
 
-
 # Testing if environment variables are available.
 if not "OS_USERNAME" in os.environ:
-    os.environ["OS_USERNAME"]="Default"
+    os.environ["OS_USERNAME"] = "Default"
 if not "OS_PASSWORD" in os.environ:
-    os.environ["OS_PASSWORD"]="Default"
+    os.environ["OS_PASSWORD"] = "Default"
 if not "OS_TENANT_NAME" in os.environ:
-    os.environ["OS_TENANT_NAME"]="Default"
+    os.environ["OS_TENANT_NAME"] = "Default"
 if not "OS_TENANT_ID" in os.environ:
-    os.environ["OS_TENANT_ID"]="Default"
+    os.environ["OS_TENANT_ID"] = "Default"
 if not "OS_REGION_NAME" in os.environ:
-    os.environ["OS_REGION_NAME"]="Default"
+    os.environ["OS_REGION_NAME"] = "Default"
 if not "OS_AUTH_URL" in os.environ:
-    os.environ["OS_AUTH_URL"]="Default"
+    os.environ["OS_AUTH_URL"] = "Default"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("keypair", help="Keypair ID")
@@ -65,63 +65,66 @@ openssl_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 try:
     #Create CA certificates
     def createCaCert():
-            print("CA")
-            subprocess.call(["openssl", "genrsa", "-out", "ca-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "ca-key.pem", "-days", "10000", "-out", "ca.pem", "-subj", "/CN=k8s-ca"], cwd='./tls')
+        """Create CA certificates."""
+        print("CA")
+        subprocess.call(["openssl", "genrsa", "-out", "ca-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "ca-key.pem", "-days", "10000", "-out", "ca.pem", "-subj", "/CN=k8s-ca"], cwd='./tls')
 
-            print("etcd CA")
-            subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
+        print("etcd CA")
+        subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
 
     #Create node certificates
-    def createNodeCert(node):
-            print("received: " + node)
+    def createNodeCert(nodeip):
+        """Create Node certificates."""
+        print("received: " + nodeip)
+        openssltemplate = (openssl_template.render(
+            floatingip1=args.floatingip1,
+            ipaddress=nodeip,
+            loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
+            ))
 
-            openssltemplate = (openssl_template.render(
-                floatingip1=args.floatingip1,
-                ipaddress=node,
-                loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
-                ))
+        with open('./tls/openssl.cnf', 'w') as openssl:
+            openssl.write(openssltemplate)
 
-            with open('./tls/openssl.cnf', 'w') as openssl:
-               openssl.write(openssltemplate)
+        nodeoctet = nodeip.rsplit('.')[3]
+        subprocess.call(["openssl", "genrsa", "-out", nodeip +"-k8s-node-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", nodeip +"-k8s-node-key.pem", "-out", nodeip +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(args.clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", nodeip +"-k8s-node.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", nodeip+"-k8s-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
-            nodeoctet=node.rsplit('.')[3]
-            subprocess.call(["openssl", "genrsa", "-out", node +"-k8s-node-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-new", "-key", node +"-k8s-node-key.pem", "-out", node +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(args.clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
-            subprocess.call(["openssl", "x509", "-req", "-in", node +"-k8s-node.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", node+"-k8s-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
-
-            # ${i}-etcd-worker.pem
-            subprocess.call(["openssl", "genrsa", "-out", node +"-etcd-node-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-new", "-key", node +"-etcd-node-key.pem", "-out", node +"-etcd-node.csr", "-subj", "/CN="+node+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
-            subprocess.call(["openssl", "x509", "-req", "-in", node +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", node+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+        # ${i}-etcd-worker.pem
+        subprocess.call(["openssl", "genrsa", "-out", nodeip +"-etcd-node-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", nodeip +"-etcd-node-key.pem", "-out", nodeip +"-etcd-node.csr", "-subj", "/CN="+nodeip+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", nodeip +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", nodeip+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
 
     #Create client certificates
     def createClientCert(user):
-            print("client: " + user)
-            subprocess.call(["openssl", "genrsa", "-out", user +"-key.pem", "2048"], cwd='./tls')
-            subprocess.call(["openssl", "req", "-new", "-key", user +"-key.pem", "-out", user+".csr", "-subj", "/CN="+user+"/O=system:masters", "-config", "openssl.cnf"], cwd='./tls')
-            subprocess.call(["openssl", "x509", "-req", "-in", user+".csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", user+".pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+        """Create Client certificates."""
+        print("client: " + user)
+        subprocess.call(["openssl", "genrsa", "-out", user +"-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", user +"-key.pem", "-out", user+".csr", "-subj", "/CN="+user+"/O=system:masters", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", user+".csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", user+".pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
     def createClusterId():
-            discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
-            discoversize="/new?size="+ str(args.managers)
-            discoverurl.request("GET", discoversize)
-            return discoverurl.getresponse().read()
+        """Create and Retrieve ClusterID."""
+        discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
+        discoversize = "/new?size="+ str(args.managers)
+        discoverurl.request("GET", discoversize)
+        return discoverurl.getresponse().read()
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
 
 
-    discovery_id=createClusterId()
+    discovery_id = createClusterId()
     createCaCert()
 
     buffer = open('./tls/ca.pem', 'rU').read()
-    CAPEM=base64.b64encode(buffer)
+    CAPEM = base64.b64encode(buffer)
 
     buffer = open('./tls/etcd-ca.pem', 'rU').read()
-    ETCDCAPEM=base64.b64encode(buffer)
+    ETCDCAPEM = base64.b64encode(buffer)
 
     with open('k8s_floating_ip.txt', 'w') as k8sfip:
         k8sfip.write(args.floatingip1)
@@ -136,10 +139,10 @@ try:
         ))
 
     with open('cloud.conf', 'w') as cloudconf:
-       cloudconf.write(cloudconfig_template)
+        cloudconf.write(cloudconfig_template)
 
     buffer = open('cloud.conf', 'rU').read()
-    cloudconfbase64=base64.b64encode(buffer)
+    cloudconfbase64 = base64.b64encode(buffer)
 
     k8stemplate = (template.render(
         username=args.username,
@@ -156,53 +159,53 @@ try:
         floatingip2=args.floatingip2,
         ))
 
-    list=""
-    for node in range(10,args.managers+10):
+    iplist = ""
+    for node in range(10, args.managers+10):
         apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
-        list = list + apiserver
+        ipiplist = iplist + apiserver
 
-    print("Apiservers: "+ list.rstrip(','))
+    print("Apiservers: "+ iplist.rstrip(','))
 
-    for node in range(10,args.managers+10):
+    for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
         createNodeCert(lanip)
         buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
-        k8snodebase64=base64.b64encode(buffer)
+        k8snodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
-        k8snodekeybase64=base64.b64encode(buffer)
+        k8snodekeybase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
-        etcdnodebase64=base64.b64encode(buffer)
+        etcdnodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
-        etcdnodekeybase64=base64.b64encode(buffer)
+        etcdnodekeybase64 = base64.b64encode(buffer)
 
         master_template = (controller_template.render(
-           workers=args.workers,
-           dnsserver=args.dnsserver,
-           etcdendpointsurls=list.rstrip(','),
-           floatingip1=args.floatingip1,
-           k8sver=args.k8sver,
-           flannelver=args.flannelver,
-           netoverlay=args.netoverlay,
-           cloudprovider=args.cloudprovider,
-           authmode=args.authmode,
-           clustername=args.clustername,
-           subnetcidr=args.subnetcidr,
-           calicocidr=args.calicocidr,
-           ipaddress=lanip,
-           ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
-           discoveryid=discovery_id,
-           cabase64=CAPEM,
-           etcdcabase64=ETCDCAPEM,
-           k8snodebase64=k8snodebase64,
-           k8snodekeybase64=k8snodekeybase64,
-           etcdnodebase64=etcdnodebase64,
-           etcdnodekeybase64=etcdnodekeybase64,
-           cloudconfbase64=cloudconfbase64,
-           ))
+            workers=args.workers,
+            dnsserver=args.dnsserver,
+            etcdendpointsurls=iplist.rstrip(','),
+            floatingip1=args.floatingip1,
+            k8sver=args.k8sver,
+            flannelver=args.flannelver,
+            netoverlay=args.netoverlay,
+            cloudprovider=args.cloudprovider,
+            authmode=args.authmode,
+            clustername=args.clustername,
+            subnetcidr=args.subnetcidr,
+            calicocidr=args.calicocidr,
+            ipaddress=lanip,
+            ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
+            discoveryid=discovery_id,
+            cabase64=CAPEM,
+            etcdcabase64=ETCDCAPEM,
+            k8snodebase64=k8snodebase64,
+            k8snodekeybase64=k8snodekeybase64,
+            etcdnodebase64=etcdnodebase64,
+            etcdnodekeybase64=etcdnodekeybase64,
+            cloudconfbase64=cloudconfbase64,
+            ))
 
         with open(nodeyaml, 'w') as controller:
-          controller.write(master_template)
+            controller.write(master_template)
 
     #creating admin certificate
     createClientCert("admin")
@@ -217,17 +220,17 @@ try:
         kubeconfig.write(kubeconfig_template)
 
     with open('k8s.tf', 'w') as k8s:
-       k8s.write(k8stemplate)
+        k8s.write(k8stemplate)
 
-    list=""
-    listArray=[]
-    for node in range(10,args.managers+args.workers+10):
-       lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + " ")
-       list = list + lanip
-       listArray.append(lanip)
+    iplist = ""
+    iplistArray = []
+    for node in range(10, args.managers+args.workers+10):
+        lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + " ")
+        iplist = iplist + lanip
+        iplistArray.append(lanip)
 
     with open('k8s_cluster_ips.txt', 'w') as k8scips:
-       k8scips.write(str(list))
+        k8scips.write(str(iplist))
 
 except Exception as e:
     raise
