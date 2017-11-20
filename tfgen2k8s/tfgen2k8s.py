@@ -162,10 +162,10 @@ try:
     iplist = ""
     for node in range(10, args.managers+10):
         apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
-        ipiplist = iplist + apiserver
+        iplist = iplist + apiserver
 
     print("Apiservers: "+ iplist.rstrip(','))
-
+    
     for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
