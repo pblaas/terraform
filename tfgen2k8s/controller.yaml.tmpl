@@ -273,6 +273,7 @@ write_files:
           - --etcd-cafile=/etc/kubernetes/ssl/etcd-ca.pem
           - --etcd-certfile=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem
           - --etcd-keyfile=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem
+          - --apiserver-count={{ managers }}
           - --allow-privileged=true
           - --storage-backend=etcd2
           - --service-cluster-ip-range=10.3.0.0/24
@@ -381,7 +382,7 @@ write_files:
           - controller-manager
           - --master=http://127.0.0.1:8080
           - --leader-elect=true
-          - --service-account-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-key.pem
+          - --service-account-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --root-ca-file=/etc/kubernetes/ssl/ca.pem
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf

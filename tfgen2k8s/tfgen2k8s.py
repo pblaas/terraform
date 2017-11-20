@@ -165,7 +165,7 @@ try:
         iplist = iplist + apiserver
 
     print("Apiservers: "+ iplist.rstrip(','))
-    
+
     for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
@@ -180,6 +180,7 @@ try:
         etcdnodekeybase64 = base64.b64encode(buffer)
 
         master_template = (controller_template.render(
+            managers=args.managers,
             workers=args.workers,
             dnsserver=args.dnsserver,
             etcdendpointsurls=iplist.rstrip(','),
