@@ -18,6 +18,9 @@ coreos:
     peer-key-file: /etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem
     peer-trusted-ca-file: /etc/kubernetes/ssl/etcd-ca.pem
     peer-client-cert-auth: true
+{% if isworker == 1 %}
+    proxy: on
+{% endif %}
   fleet:
     metadata: "role=node"
   units:
@@ -54,7 +57,9 @@ coreos:
             Requires=etcd2.service
             After=etcd2.service
             [Service]
+{% if isworker != 1 %}
             ExecStartPre=/usr/bin/etcdctl --cert-file=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node.pem --key-file=/etc/kubernetes/ssl/{{ ipaddress }}-etcd-node-key.pem --ca-file=/etc/kubernetes/ssl/etcd-ca.pem set /coreos.com/network/config '{ "Network": "10.244.0.0/16", "Backend":{"Type":"vxlan"}}'
+{% endif %}
             ExecStartPre=/usr/bin/ln -sf /etc/flannel/options.env /run/flannel/options.env
       command: start
     - name: kubelet.service
@@ -251,6 +256,7 @@ write_files:
       FLANNELD_ETCD_CERTFILE=/etc/ssl/certs/{{ ipaddress }}-etcd-node.pem
       FLANNELD_ETCD_CAFILE=/etc/ssl/certs/etcd-ca.pem
       FLANNEL_IMAGE_TAG={{ flannelver }}
+{% if isworker != 1 %}
   - path: "/etc/kubernetes/manifests/kube-apiserver.yaml"
     permissions: "0644"
     owner: "root"
@@ -320,6 +326,7 @@ write_files:
         - hostPath:
             path: /usr/share/ca-certificates
           name: ssl-certs-host
+{% endif %}
   - path: "/etc/kubernetes/manifests/kube-proxy.yaml"
     permissions: "0644"
     owner: "root"
@@ -337,7 +344,11 @@ write_files:
           command:
           - /hyperkube
           - proxy
-          - --master=http://127.0.0.1:8080
+{% if isworker == 1 %}
+          - --master=https://{{ loadbalancer }}
+{% else %}
+          - --master=https://127.0.0.1:8080
+{% endif %}
           - --cluster-cidr=10.244.0.0/16
           - --conntrack-max-per-core=0
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
@@ -363,6 +374,7 @@ write_files:
         - name: "etc-kube-ssl"
           hostPath:
             path: "/etc/kubernetes/ssl"
+{% if isworker != 1 %}
   - path: "/etc/kubernetes/manifests/kube-controller-manager.yaml"
     permissions: "0644"
     owner: "root"
@@ -461,6 +473,7 @@ write_files:
         - name: "etc-kube-ssl"
           hostPath:
             path: "/etc/kubernetes/ssl"
+{% endif %}
   - path: "/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem"
     permissions: "0600"
     encoding: "base64"
@@ -542,7 +555,11 @@ write_files:
       clusters:
       - name: local
         cluster:
+{% if isworker == 1 %}
+          server: https://{{ loadbalancer }}
+{% else %}
           server: https://{{ ipaddress }}
+{% endif %}
           certificate-authority: /etc/kubernetes/ssl/ca.pem
       users:
       - name: kubelet

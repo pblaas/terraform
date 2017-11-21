@@ -17,7 +17,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_ENVIRONMENT = Environment(
     autoescape=False,
     loader=FileSystemLoader(os.path.join(PATH, '.')),
-    trim_blocks=False)
+    trim_blocks=True)
 
 # Testing if environment variables are available.
 if not "OS_USERNAME" in os.environ:
@@ -57,10 +57,11 @@ args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
 config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
-controller_template = TEMPLATE_ENVIRONMENT.get_template('controller.yaml.tmpl')
+cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
-openssl_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
+opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
+opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
 
 try:
     #Create CA certificates
@@ -75,14 +76,19 @@ try:
         subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
 
     #Create node certificates
-    def createNodeCert(nodeip):
+    def createNodeCert(nodeip, k8srole):
         """Create Node certificates."""
         print("received: " + nodeip)
-        openssltemplate = (openssl_template.render(
-            floatingip1=args.floatingip1,
-            ipaddress=nodeip,
-            loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
-            ))
+        if k8srole == "manager":
+            openssltemplate = (opensslmanager_template.render(
+                floatingip1=args.floatingip1,
+                ipaddress=nodeip,
+                loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3"
+                ))
+        else:
+            openssltemplate = (opensslworker_template.render(
+                ipaddress=nodeip,
+                ))
 
         with open('./tls/openssl.cnf', 'w') as openssl:
             openssl.write(openssltemplate)
@@ -98,7 +104,6 @@ try:
         subprocess.call(["openssl", "x509", "-req", "-in", nodeip +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", nodeip+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
 
-    #Create client certificates
     def createClientCert(user):
         """Create Client certificates."""
         print("client: " + user)
@@ -108,10 +113,11 @@ try:
 
     def createClusterId():
         """Create and Retrieve ClusterID."""
-        discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
-        discoversize = "/new?size="+ str(args.managers)
-        discoverurl.request("GET", discoversize)
-        return discoverurl.getresponse().read()
+        #discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
+        #discoversize = "/new?size="+ str(args.managers)
+        #discoverurl.request("GET", discoversize)
+        #return discoverurl.getresponse().read()
+        return "test"
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
@@ -169,7 +175,7 @@ try:
     for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
-        createNodeCert(lanip)
+        createNodeCert(lanip, "manager")
         buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
         k8snodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
@@ -179,7 +185,7 @@ try:
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
 
-        master_template = (controller_template.render(
+        manager_template = (cloudconf_template.render(
             managers=args.managers,
             workers=args.workers,
             dnsserver=args.dnsserver,
@@ -206,7 +212,51 @@ try:
             ))
 
         with open(nodeyaml, 'w') as controller:
-            controller.write(master_template)
+            controller.write(manager_template)
+
+    for node in range(10+args.managers, args.managers+args.workers+10):
+        lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
+        nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
+        createNodeCert(lanip, "worker")
+        buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
+        k8snodebase64 = base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
+        k8snodekeybase64 = base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
+        etcdnodebase64 = base64.b64encode(buffer)
+        buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
+        etcdnodekeybase64 = base64.b64encode(buffer)
+
+        worker_template = (cloudconf_template.render(
+            isworker=1,
+            managers=args.managers,
+            workers=args.workers,
+            dnsserver=args.dnsserver,
+            etcdendpointsurls=iplist.rstrip(','),
+            floatingip1=args.floatingip1,
+            k8sver=args.k8sver,
+            flannelver=args.flannelver,
+            netoverlay=args.netoverlay,
+            cloudprovider=args.cloudprovider,
+            authmode=args.authmode,
+            clustername=args.clustername,
+            subnetcidr=args.subnetcidr,
+            calicocidr=args.calicocidr,
+            ipaddress=lanip,
+            ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
+            loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3",
+            discoveryid=discovery_id,
+            cabase64=CAPEM,
+            etcdcabase64=ETCDCAPEM,
+            k8snodebase64=k8snodebase64,
+            k8snodekeybase64=k8snodekeybase64,
+            etcdnodebase64=etcdnodebase64,
+            etcdnodekeybase64=etcdnodekeybase64,
+            cloudconfbase64=cloudconfbase64,
+            ))
+
+        with open(nodeyaml, 'w') as worker:
+            worker.write(worker_template)
 
     #creating admin certificate
     createClientCert("admin")
