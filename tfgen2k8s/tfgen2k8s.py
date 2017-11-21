@@ -113,11 +113,10 @@ try:
 
     def createClusterId():
         """Create and Retrieve ClusterID."""
-        #discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
-        #discoversize = "/new?size="+ str(args.managers)
-        #discoverurl.request("GET", discoversize)
-        #return discoverurl.getresponse().read()
-        return "test"
+        discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
+        discoversize = "/new?size="+ str(args.managers)
+        discoverurl.request("GET", discoversize)
+        return discoverurl.getresponse().read()
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
