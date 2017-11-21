@@ -266,7 +266,7 @@ resource "openstack_lb_monitor_v2" "{{ clustername }}_monitor_1" {
 
 resource "openstack_lb_loadbalancer_v2" "{{ clustername }}_lb_1" {
   name          = "{{ clustername }}_lb_1"
-  vip_subnet_id = "${openstack_networking_subnet_v2.subnet_nodelb_cluster.id}"
+  vip_subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
 }
 
 resource "openstack_lb_listener_v2" "{{ clustername }}_listener_1" {
