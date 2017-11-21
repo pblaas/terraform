@@ -81,7 +81,11 @@ coreos:
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
         --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml \
         --require-kubeconfig \
+{% if isworker != 1 %}
         --register-schedulable=false \
+{% else %}
+        --register-node=true \
+{% endif %}
         --cni-conf-dir=/etc/kubernetes/cni/net.d \
         --network-plugin=cni \
         --container-runtime=docker \
