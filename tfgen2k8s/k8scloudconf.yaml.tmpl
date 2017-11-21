@@ -351,7 +351,7 @@ write_files:
 {% if isworker == 1 %}
           - --master=https://{{ loadbalancer }}
 {% else %}
-          - --master=https://127.0.0.1:8080
+          - --master=http://127.0.0.1:8080
 {% endif %}
           - --cluster-cidr=10.244.0.0/16
           - --conntrack-max-per-core=0
