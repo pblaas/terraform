@@ -254,3 +254,52 @@ resource "openstack_compute_floatingip_associate_v2" "fip_{{ clustername }}_f2" 
 }
 
 {% endif %}
+
+
+resource "openstack_lb_monitor_v2" "{{ clustername }}_monitor_1" {
+  pool_id     = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
+  type        = "PING"
+  delay       = 20
+  timeout     = 10
+  max_retries = 5
+}
+
+resource "openstack_lb_loadbalancer_v2" "{{ clustername }}_lb_1" {
+  name          = "{{ clustername }}_lb_1"
+  vip_subnet_id = "${openstack_networking_subnet_v2.subnet_nodelb_cluster.id}"
+}
+
+resource "openstack_lb_listener_v2" "{{ clustername }}_listener_1" {
+  name            = "{{ clustername }}_listener_1"
+  protocol        = "TCP"
+  protocol_port   =  443
+  loadbalancer_id = "${openstack_lb_loadbalancer_v2.{{ clustername }}_lb_1.id}"
+}
+
+resource "openstack_lb_pool_v2" "{{ clustername }}_pool_1" {
+  name        = "pool_1"
+  protocol    = "TCP"
+  lb_method   = "ROUND_ROBIN"
+  listener_id = "${openstack_lb_listener_v2.{{ clustername }}_listener_1.id}"
+}
+
+resource "openstack_lb_member_v2" "{{ clustername }}_member_1" {
+  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node10.access_ip_v4}"
+  protocol_port    = 443
+}
+
+resource "openstack_lb_member_v2" "{{ clustername }}_member_2" {
+  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node11.access_ip_v4}"
+  protocol_port    = 443
+}
+
+resource "openstack_lb_member_v2" "{{ clustername }}_member_3" {
+  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
+  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node12.access_ip_v4}"
+  protocol_port    = 443
+}
