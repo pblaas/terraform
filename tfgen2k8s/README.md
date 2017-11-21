@@ -4,6 +4,7 @@ This project consists of the python script tfgen2k8s.py and four template files.
 
 ### Dependencies
 
+* OpenStack
 * Terraform
 * Python2.7
 * Jinja2 python module
@@ -62,9 +63,16 @@ optional arguments:
 ```
 
 ### Features
-* HA master k8s setup
-* Loadbalancing through LBAAS
-* First three nodes are part of etcd2 cluster and have Master roles.
+* HA master k8s setup.
+* PKI between etcd nodes and client to etcd cluster.
+* PKI between k8s nodes.
+* PKI from kubectl to k8s API.
+* OpenStack provider for Storage through Cinder plugin.
+* NodeRestriction admission control.
+* RBAC authorization mode.
+* Private network support
+* Loadbalancing k8s managers through OpenStack (LBAAS).
+* First three nodes are part of etcd2 cluster and have the manager role.
 * etcd2 cluster inside k8s cluster.
 
 ### Caveats
