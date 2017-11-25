@@ -8,10 +8,10 @@ keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth, clientAuth
 subjectAltName = @alt_names
 [alt_names]
-DNS.1 = swarm 
-DNS.2 = swarm.default
-DNS.3 = swarm.default.svc
-DNS.4 = swarm.default.svc.cluster.local
+DNS.1 = kubernetes
+DNS.2 = kubernetes.default
+DNS.3 = kubernetes.default.svc
+DNS.4 = kubernetes.default.svc.cluster.local
 IP.1 = {{ floatingip1 }} 
 IP.2 = {{ ipaddress }}
 IP.3 = {{ loadbalancer }}
