@@ -1,6 +1,5 @@
 *.txt 
 *.tf 
-*.yaml
 config.env 
 kubeconfig.sh 
 cloud.conf 

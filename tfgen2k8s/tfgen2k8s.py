@@ -2,7 +2,7 @@
 """Kubernetes cluster generator."""
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __status__ = "Prototype"
 
 
@@ -75,6 +75,21 @@ try:
         subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
 
+    def createSAcert():
+        """Create Service Account certificates."""
+        print("ServiceAcccount cert")
+
+        openssltemplate = (opensslworker_template.render(
+            ipaddress="127.0.0.1"
+            ))
+
+        with open('./tls/openssl.cnf', 'w') as openssl:
+            openssl.write(openssltemplate)
+
+        subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-k8s-key.pem", "-out", "sa-"+(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
         """Create Node certificates."""
@@ -124,6 +139,8 @@ try:
 
     discovery_id = createClusterId()
     createCaCert()
+    #create ServiceAccount certificate
+    createSAcert()
 
     buffer = open('./tls/ca.pem', 'rU').read()
     CAPEM = base64.b64encode(buffer)
@@ -175,6 +192,7 @@ try:
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
         createNodeCert(lanip, "manager")
+
         buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
         k8snodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
@@ -183,6 +201,13 @@ try:
         etcdnodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
+
+        #"sa-"+str(args.clustername)+"k8s-key.pem"
+        buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
+        sak8sbase64 = base64.b64encode(buffer)
+        buffer = open("./tls/sa-"+str(args.clustername)+"-k8s-key.pem", 'rU').read()
+        sak8skeybase64 = base64.b64encode(buffer)
+
 
         manager_template = (cloudconf_template.render(
             managers=args.managers,
@@ -208,10 +233,13 @@ try:
             etcdnodebase64=etcdnodebase64,
             etcdnodekeybase64=etcdnodekeybase64,
             cloudconfbase64=cloudconfbase64,
+            sak8sbase64=sak8sbase64,
+            sak8skeybase64=sak8skeybase64
             ))
 
         with open(nodeyaml, 'w') as controller:
             controller.write(manager_template)
+
 
     for node in range(10+args.managers, args.managers+args.workers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
