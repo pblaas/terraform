@@ -119,7 +119,6 @@ spec:
         args:
           - --tls-key-file=/certs/dashboard.key
           - --tls-cert-file=/certs/dashboard.crt
-          - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
           # Uncomment the following line to manually specify Kubernetes API server Host
           # If not specified, Dashboard will attempt to auto discover the API server and connect
           # to it. Uncomment only if the default does not work.
@@ -129,12 +128,6 @@ spec:
           mountPath: /certs
           readOnly: true
           # Create on-disk volume to store exec logs
-        - mountPath: /etc/kubernetes/master-kubeconfig.yaml
-          name: "kubeconfig"
-          readOnly: true
-        - mountPath: /etc/kubernetes/ssl
-          name: "etc-kube-ssl"
-          readOnly: true
         - mountPath: /tmp
           name: tmp-volume
         livenessProbe:
@@ -150,12 +143,6 @@ spec:
           secretName: kubernetes-dashboard-certs
       - name: tmp-volume
         emptyDir: {}
-      - name: "kubeconfig"
-        hostPath:
-          path: "/etc/kubernetes/master-kubeconfig.yaml"
-      - name: "etc-kube-ssl"
-        hostPath:
-          path: "/etc/kubernetes/ssl"
       serviceAccountName: kubernetes-dashboard
       # Comment the following tolerations if Dashboard must not be deployed on master
       tolerations:
@@ -178,4 +165,3 @@ spec:
       targetPort: 8443
   selector:
     k8s-app: kubernetes-dashboard
-
