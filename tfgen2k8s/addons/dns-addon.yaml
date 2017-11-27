@@ -22,6 +22,7 @@ spec:
 
 ---
 
+
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -63,13 +64,6 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 5
-        volumeMounts:
-        - mountPath: /etc/kubernetes/master-kubeconfig.yaml
-          name: "kubeconfig"
-          readOnly: true
-        - mountPath: /etc/kubernetes/ssl
-          name: "etc-kube-ssl"
-          readOnly: true
         readinessProbe:
           httpGet:
             path: /readiness
@@ -80,8 +74,6 @@ spec:
         args:
         - --domain=cluster.local.
         - --dns-port=10053
-        - -v=4
-        - --kubecfg-file=/etc/kubernetes/master-kubeconfig.yaml
         ports:
         - containerPort: 10053
           name: dns-local
@@ -131,11 +123,3 @@ spec:
         - containerPort: 8080
           protocol: TCP
       dnsPolicy: Default
-      volumes:
-      - name: "kubeconfig"
-        hostPath:
-          path: "/etc/kubernetes/master-kubeconfig.yaml"
-      - name: "etc-kube-ssl"
-        hostPath:
-          path: "/etc/kubernetes/ssl"
-
