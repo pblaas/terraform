@@ -182,6 +182,7 @@ try:
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
         createNodeCert(lanip, "manager")
+
         buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
         k8snodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
@@ -193,12 +194,12 @@ try:
 
         #create ServiceAccount certificate
         createSAcert()
-        
+
         #"sa-"+str(args.clustername)+"k8s-key.pem"
-        sak8sbase64 = base64.b64encode(buffer)
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
-        sak8skeybase64 = base64.b64encode(buffer)
+        sak8sbase64 = base64.b64encode(buffer)
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s-key.pem", 'rU').read()
+        sak8skeybase64 = base64.b64encode(buffer)
 
 
         manager_template = (cloudconf_template.render(
