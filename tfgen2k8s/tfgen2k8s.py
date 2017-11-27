@@ -78,6 +78,14 @@ try:
     def createSAcert():
         """Create Service Account certificates."""
         print("ServiceAcccount cert")
+
+        openssltemplate = (opensslworker_template.render(
+            ipaddress="127.0.0.1"
+            ))
+
+        with open('./tls/openssl.cnf', 'w') as openssl:
+            openssl.write(openssltemplate)
+
         subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-k8s-key.pem", "-out", "sa-"+(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
@@ -131,6 +139,8 @@ try:
 
     discovery_id = createClusterId()
     createCaCert()
+    #create ServiceAccount certificate
+    createSAcert()
 
     buffer = open('./tls/ca.pem', 'rU').read()
     CAPEM = base64.b64encode(buffer)
@@ -191,9 +201,6 @@ try:
         etcdnodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
-
-        #create ServiceAccount certificate
-        createSAcert()
 
         #"sa-"+str(args.clustername)+"k8s-key.pem"
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
