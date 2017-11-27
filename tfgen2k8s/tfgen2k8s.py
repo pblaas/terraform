@@ -75,6 +75,10 @@ try:
         subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
 
+        print("ServiceAcccount cert")
+        subprocess.call(["openssl", "genrsa", "-out", "sa-"+str(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+str(args.clustername)+"-k8s-key.pem", "-out", "sa-"+str(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s-"+str(args.clustername), "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+str(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+str(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
         """Create Node certificates."""
@@ -184,6 +188,13 @@ try:
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
 
+        #"sa-"+str(args.clustername)+"k8s-key.pem"
+        sak8sbase64 = base64.b64encode(buffer)
+        buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
+        sak8skeybase64 = base64.b64encode(buffer)
+        buffer = open("./tls/sa-"+str(args.clustername)+"-k8s-key.pem", 'rU').read()
+
+
         manager_template = (cloudconf_template.render(
             managers=args.managers,
             workers=args.workers,
@@ -208,6 +219,8 @@ try:
             etcdnodebase64=etcdnodebase64,
             etcdnodekeybase64=etcdnodekeybase64,
             cloudconfbase64=cloudconfbase64,
+            sak8sbase64=sak8sbase64,
+            sak8skeybase64=sak8skeybase64
             ))
 
         with open(nodeyaml, 'w') as controller:

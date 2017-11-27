@@ -293,7 +293,7 @@ write_files:
           - --tls-cert-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --tls-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --service-account-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
+          - --service-account-key-file=/etc/kubernetes/ssl/sa-{{ clustername }}-k8s.pem
           - --runtime-config=extensions/v1beta1/networkpolicies=true
           - --kubelet-client-certificate=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --kubelet-client-key=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
@@ -398,7 +398,7 @@ write_files:
           - controller-manager
           - --master=http://127.0.0.1:8080
           - --leader-elect=true
-          - --service-account-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
+          - --service-account-private-key-file=/etc/kubernetes/ssl/sa-{{ clustername }}-k8s-key.pem
           - --root-ca-file=/etc/kubernetes/ssl/ca.pem
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf
@@ -477,6 +477,18 @@ write_files:
         - name: "etc-kube-ssl"
           hostPath:
             path: "/etc/kubernetes/ssl"
+  - path: "/etc/kubernetes/ssl/sa-{{ clustername }}-k8s-key.pem"
+    permissions: "0600"
+    encoding: "base64"
+    owner: "root"
+    content: |
+      {{ sak8skeybase64 }}
+  - path: "/etc/kubernetes/ssl/sa-{{ clustername }}-k8s.pem"
+    permissions: "0600"
+    encoding: "base64"
+    owner: "root"
+    content: |
+      {{ sak8sbase64 }}
 {% endif %}
   - path: "/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem"
     permissions: "0600"
