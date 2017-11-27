@@ -75,10 +75,13 @@ try:
         subprocess.call(["openssl", "genrsa", "-out", "etcd-ca-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-x509", "-new", "-nodes", "-key", "etcd-ca-key.pem", "-days", "10000", "-out", "etcd-ca.pem", "-subj", "/CN=etcd-k8s-ca"], cwd='./tls')
 
+    def createSAcert():
+        """Create Service Account certificates."""
         print("ServiceAcccount cert")
-        subprocess.call(["openssl", "genrsa", "-out", "sa-"+str(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
-        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+str(args.clustername)+"-k8s-key.pem", "-out", "sa-"+str(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s-"+str(args.clustername), "-config", "openssl.cnf"], cwd='./tls')
-        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+str(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+str(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-k8s-key.pem", "-out", "sa-"+(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
         """Create Node certificates."""
@@ -188,6 +191,9 @@ try:
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
 
+        #create ServiceAccount certificate
+        createSAcert()
+        
         #"sa-"+str(args.clustername)+"k8s-key.pem"
         sak8sbase64 = base64.b64encode(buffer)
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
@@ -225,6 +231,7 @@ try:
 
         with open(nodeyaml, 'w') as controller:
             controller.write(manager_template)
+
 
     for node in range(10+args.managers, args.managers+args.workers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
