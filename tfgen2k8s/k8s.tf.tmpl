@@ -305,7 +305,9 @@ resource "openstack_lb_member_v2" "{{ clustername }}_member_3" {
 }
 
 
-###
+{% if workers > 0 %}
+### Create worker loadbalancer for external traffic.
+
 resource "openstack_lb_monitor_v2" "{{ clustername }}_monitor_2" {
   pool_id     = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
   type        = "PING"
@@ -336,9 +338,10 @@ resource "openstack_lb_pool_v2" "{{ clustername }}_pool_2" {
 }
 
 
-{%- set counter = 10+managers %}
-{%- for _ in range(counter, (counter+workers)) %}
+{% set counter = 10+managers %}
+{% for _ in range(counter, (counter+workers)) %}
 
+{% if loop.index <= 3 %}
 resource "openstack_lb_member_v2" "{{ clustername }}_member_2_{{ counter + loop.index -1 }}" {
   pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
   subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
@@ -346,4 +349,7 @@ resource "openstack_lb_member_v2" "{{ clustername }}_member_2_{{ counter + loop.
   protocol_port    = 80
 }
 
+{% endif %}
 {% endfor %}
+
+{% endif %}
