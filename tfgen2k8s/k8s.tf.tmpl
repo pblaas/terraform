@@ -317,7 +317,9 @@ resource "openstack_lb_monitor_v2" "{{ clustername }}_monitor_2" {
 resource "openstack_lb_loadbalancer_v2" "{{ clustername }}_lb_2" {
   name          = "{{ clustername }}_lb_2"
   vip_subnet_id = "f9c73cd5-9e7b-4bfd-89eb-c2f4f584c326"
+  security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
 }
+
 
 resource "openstack_lb_listener_v2" "{{ clustername }}_listener_2" {
   name            = "{{ clustername }}_listener_2"
@@ -334,23 +336,14 @@ resource "openstack_lb_pool_v2" "{{ clustername }}_pool_2" {
 }
 
 
-resource "openstack_lb_member_v2" "{{ clustername }}_member_2_1" {
+{%- set counter = 10+managers %}
+{%- for _ in range(counter, (counter+workers)) %}
+
+resource "openstack_lb_member_v2" "{{ clustername }}_member_2_{{ counter + loop.index -1 }}" {
   pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
   subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node10.access_ip_v4}"
+  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node{{ counter + loop.index -1 }}.access_ip_v4}"
   protocol_port    = 80
 }
 
-resource "openstack_lb_member_v2" "{{ clustername }}_member_2_2" {
-  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
-  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node11.access_ip_v4}"
-  protocol_port    = 80
-}
-
-resource "openstack_lb_member_v2" "{{ clustername }}_member_2_3" {
-  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
-  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node12.access_ip_v4}"
-  protocol_port    = 80
-}
+{% endfor %}
