@@ -173,8 +173,8 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_{{ clustername }}-4-3
 }
 
 
-{%- set counter = 10 %}
-{%- for _ in range(counter, (counter+managers)) %}
+{% set counter = 10 %}
+{% for _ in range(counter, (counter+managers)) %}
 resource "openstack_networking_port_v2" "k8s_{{ clustername }}_port_{{ counter + loop.index - 1 }}" {
   name               = "k8s_{{ clustername }}_port_{{ counter + loop.index - 1 }}"
   network_id         = "${openstack_networking_network_v2.network_{{ clustername }}.id}"
@@ -205,8 +205,8 @@ resource "openstack_compute_instance_v2" "k8s-{{ clustername }}-node{{ counter +
 
 {% endfor %}
 
-{%- set counter = 10+managers %}
-{%- for _ in range(counter, (counter+workers)) %}
+{% set counter = 10+managers %}
+{% for _ in range(counter, (counter+workers)) %}
 
 
 resource "openstack_networking_port_v2" "k8s_{{ clustername }}_port_{{ counter + loop.index - 1 }}" {
@@ -283,26 +283,17 @@ resource "openstack_lb_pool_v2" "{{ clustername }}_pool_1" {
   listener_id = "${openstack_lb_listener_v2.{{ clustername }}_listener_1.id}"
 }
 
-resource "openstack_lb_member_v2" "{{ clustername }}_member_1" {
+{% set counter = 10 %}
+{% for _ in range(counter, (counter+managers)) %}
+
+resource "openstack_lb_member_v2" "{{ clustername }}_member_{{ loop.index }}" {
   pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
   subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node10.access_ip_v4}"
+  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node{{ counter + loop.index -1 }}.access_ip_v4}"
   protocol_port    = 443
 }
 
-resource "openstack_lb_member_v2" "{{ clustername }}_member_2" {
-  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
-  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node11.access_ip_v4}"
-  protocol_port    = 443
-}
-
-resource "openstack_lb_member_v2" "{{ clustername }}_member_3" {
-  pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
-  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
-  address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node12.access_ip_v4}"
-  protocol_port    = 443
-}
+{% endfor %}
 
 
 {% if workers > 0 %}
