@@ -322,7 +322,7 @@ resource "openstack_networking_floatingip_v2" "{{ clustername }}_lb_2_floatip_1"
 resource "openstack_lb_listener_v2" "{{ clustername }}_listener_2" {
   name            = "{{ clustername }}_listener_2"
   protocol        = "TCP"
-  protocol_port   =  443
+  protocol_port   =  80
   loadbalancer_id = "${openstack_lb_loadbalancer_v2.{{ clustername }}_lb_2.id}"
 }
 
