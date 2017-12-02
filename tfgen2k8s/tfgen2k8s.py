@@ -57,6 +57,7 @@ args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
 config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
+calico_template = TEMPLATE_ENVIRONMENT.get_template('calico.yaml.tmpl')
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
@@ -162,6 +163,7 @@ try:
 
     with open('cloud.conf', 'w') as cloudconf:
         cloudconf.write(cloudconfig_template)
+
 
     buffer = open('cloud.conf', 'rU').read()
     cloudconfbase64 = base64.b64encode(buffer)
@@ -284,6 +286,22 @@ try:
 
         with open(nodeyaml, 'w') as worker:
             worker.write(worker_template)
+
+    lanip = str(args.subnetcidr.rsplit('.', 1)[0] + ".10")
+    buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
+    etcdnodebase64 = base64.b64encode(buffer)
+    buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
+    etcdnodekeybase64 = base64.b64encode(buffer)
+
+    calico_template = (calico_template.render(
+        etcdendpointsurls=iplist.rstrip(','),
+        etcdcabase64=ETCDCAPEM,
+        etcdnodebase64=etcdnodebase64,
+        etcdnodekeybase64=etcdnodekeybase64
+        ))
+
+    with open('calico.yaml', 'w') as calico:
+        calico.write(calico_template)
 
     #creating admin certificate
     createClientCert("admin")
