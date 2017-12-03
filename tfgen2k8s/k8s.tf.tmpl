@@ -311,6 +311,9 @@ resource "openstack_lb_loadbalancer_v2" "{{ clustername }}_lb_2" {
   name          = "{{ clustername }}_lb_2"
   vip_subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
   security_group_ids = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
+  depends_on = [
+       "${openstack_lb_loadbalancer_v2.{{ clustername }}_lb_1}"
+     ]
 }
 
 resource "openstack_networking_floatingip_v2" "{{ clustername }}_lb_2_floatip_1" {
