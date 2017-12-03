@@ -57,9 +57,9 @@ data:
   # not using TLS for etcd.
   # This self-hosted install expects three files with the following names.  The values
   # should be base64 encoded strings of the entire contents of each file.
-  etcd-key: {{ etcdnodekeybase64 }} 
-  etcd-cert: {{ etcdnodebase64 }} 
-  etcd-ca: {{ etcdcabase64 }} 
+  etcd-key: {{ etcdsacalicokeybase64 }} 
+  etcd-cert: {{ etcdsacalicobase64 }}
+  etcd-ca: {{ etcdcabase64 }}
 
 ---
 
@@ -310,4 +310,3 @@ kind: ServiceAccount
 metadata:
   name: calico-node
   namespace: kube-system
-
