@@ -95,7 +95,7 @@ try:
         print("Service account calico")
         subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-calico-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-calico-key.pem", "-out", "sa-"+(args.clustername)+"-calico-key.csr", "-subj", "/CN=sa:calico", "-config", "openssl.cnf"], cwd='./tls')
-        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-calico-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-calico.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-calico-key.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-calico.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
