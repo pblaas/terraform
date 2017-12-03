@@ -19,6 +19,7 @@ TEMPLATE_ENVIRONMENT = Environment(
     loader=FileSystemLoader(os.path.join(PATH, '.')),
     trim_blocks=True)
 
+
 # Testing if environment variables are available.
 if not "OS_USERNAME" in os.environ:
     os.environ["OS_USERNAME"] = "Default"
@@ -63,6 +64,7 @@ kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
+
 
 try:
     #Create CA certificates
@@ -152,10 +154,34 @@ try:
 
     def createClusterId():
         """Create and Retrieve ClusterID."""
+        global etcdTokenId
         discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
         discoversize = "/new?size="+ str(args.managers)
         discoverurl.request("GET", discoversize)
-        return discoverurl.getresponse().read()
+        #etcdTokenId = discoverurl.getresponse().read()
+        etcdTokenId = discoverurl.getresponse().read()
+        return etcdTokenId
+
+    def printClusterInfo():
+        """Print cluster info."""
+        print("-"*40+"\n\nCluster Info:")
+        print("Etcd ID token:\t" + str(etcdTokenId.rsplit('/', 1)[1]))
+        print("k8s version:\t" + str(args.k8sver))
+        print("Clustername:\t" + str(args.clustername))
+        print("Cluster cidr:\t" + str(args.subnetcidr))
+        print("Managers:\t" + str(args.managers))
+        print("Workers:\t" + str(args.workers))
+        print("Manager img:\t" +str(args.managerimageflavor))
+        print("Worker img:\t" +str(args.workerimageflavor))
+        print("VIP1:\t\t" + str(args.floatingip1))
+        print("VIP2:\t\t" + str(args.floatingip2))
+        print("Dnsserver:\t" +str(args.dnsserver))
+        print("Net overlay:\t" + str(args.netoverlay))
+        print("Auth mode:\t" + str(args.authmode))
+        print("-"*40+"\n")
+        print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
+        print("To interact with the cluster: \tsh kubeconfig.sh")
+
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
@@ -340,8 +366,4 @@ try:
 except Exception as e:
     raise
 else:
-    print("-----------------------------")
-    print("Config generation succesfull.")
-    print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
-    print("To start building the cluster: \nterraform init && terraform plan && terraform apply && sh snat_acl.sh")
-    print("To interact with the cluster: \nsh kubeconfig.sh")
+    printClusterInfo()
