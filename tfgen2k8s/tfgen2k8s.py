@@ -19,6 +19,7 @@ TEMPLATE_ENVIRONMENT = Environment(
     loader=FileSystemLoader(os.path.join(PATH, '.')),
     trim_blocks=True)
 
+
 # Testing if environment variables are available.
 if not "OS_USERNAME" in os.environ:
     os.environ["OS_USERNAME"] = "Default"
@@ -57,11 +58,13 @@ args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
 config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
+calico_template = TEMPLATE_ENVIRONMENT.get_template('calico.yaml.tmpl')
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
+
 
 try:
     #Create CA certificates
@@ -86,9 +89,15 @@ try:
         with open('./tls/openssl.cnf', 'w') as openssl:
             openssl.write(openssltemplate)
 
+        print("Service account K8s")
         subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-k8s-key.pem", "2048"], cwd='./tls')
         subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-k8s-key.pem", "-out", "sa-"+(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
+        print("Service account calico")
+        subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-calico-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-calico-key.pem", "-out", "sa-"+(args.clustername)+"-calico-key.csr", "-subj", "/CN=sa:calico", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-calico-key.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-calico.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
@@ -126,12 +135,53 @@ try:
         subprocess.call(["openssl", "req", "-new", "-key", user +"-key.pem", "-out", user+".csr", "-subj", "/CN="+user+"/O=system:masters", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", user+".csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", user+".pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
+    def createCalicoObjects():
+        """Create Calico cluster objects."""
+        buffer_calicosa = open("./tls/sa-"+ str(args.clustername) +"-calico.pem", "rU").read()
+        etcdsacalicobase64 = base64.b64encode(buffer_calicosa)
+        buffercalicosa = open("./tls/sa-"+ str(args.clustername) +"-calico-key.pem", "rU").read()
+        etcdsacalicokeybase64 = base64.b64encode(buffercalicosa)
+
+        calicoconfig_template = (calico_template.render(
+            etcdendpointsurls=iplist.rstrip(','),
+            etcdcabase64=ETCDCAPEM,
+            etcdsacalicobase64=etcdsacalicobase64,
+            etcdsacalicokeybase64=etcdsacalicokeybase64
+            ))
+
+        with open('calico.yaml', 'w') as calico:
+            calico.write(calicoconfig_template)
+
     def createClusterId():
         """Create and Retrieve ClusterID."""
+        global etcdTokenId
         discoverurl = httplib.HTTPSConnection('discovery.etcd.io', timeout=10)
         discoversize = "/new?size="+ str(args.managers)
         discoverurl.request("GET", discoversize)
-        return discoverurl.getresponse().read()
+        #etcdTokenId = discoverurl.getresponse().read()
+        etcdTokenId = discoverurl.getresponse().read()
+        return etcdTokenId
+
+    def printClusterInfo():
+        """Print cluster info."""
+        print("-"*40+"\n\nCluster Info:")
+        print("Etcd ID token:\t" + str(etcdTokenId.rsplit('/', 1)[1]))
+        print("k8s version:\t" + str(args.k8sver))
+        print("Clustername:\t" + str(args.clustername))
+        print("Cluster cidr:\t" + str(args.subnetcidr))
+        print("Managers:\t" + str(args.managers))
+        print("Workers:\t" + str(args.workers))
+        print("Manager img:\t" +str(args.managerimageflavor))
+        print("Worker img:\t" +str(args.workerimageflavor))
+        print("VIP1:\t\t" + str(args.floatingip1))
+        print("VIP2:\t\t" + str(args.floatingip2))
+        print("Dnsserver:\t" +str(args.dnsserver))
+        print("Net overlay:\t" + str(args.netoverlay))
+        print("Auth mode:\t" + str(args.authmode))
+        print("-"*40+"\n")
+        print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
+        print("To interact with the cluster: \tsh kubeconfig.sh")
+
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
@@ -162,6 +212,7 @@ try:
 
     with open('cloud.conf', 'w') as cloudconf:
         cloudconf.write(cloudconfig_template)
+
 
     buffer = open('cloud.conf', 'rU').read()
     cloudconfbase64 = base64.b64encode(buffer)
@@ -285,8 +336,10 @@ try:
         with open(nodeyaml, 'w') as worker:
             worker.write(worker_template)
 
+
     #creating admin certificate
     createClientCert("admin")
+    createCalicoObjects()
 
     kubeconfig_template = (kubeconfig_template.render(
         floatingip1=args.floatingip1,
@@ -313,8 +366,4 @@ try:
 except Exception as e:
     raise
 else:
-    print("-----------------------------")
-    print("Config generation succesfull.")
-    print("Bootstrapping the cluster can take 3-5 minutes. Please be patient.\n")
-    print("To start building the cluster: \nterraform init && terraform plan && terraform apply && sh snat_acl.sh")
-    print("To interact with the cluster: \nsh kubeconfig.sh")
+    printClusterInfo()
