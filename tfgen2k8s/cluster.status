@@ -1,0 +1,14 @@
+etcdurls:       https://192.168.3.10:2379,https://192.168.3.11:2379,https://192.168.3.12:2379
+Etcd ID token:	0cef03972500ec13e7a99cf76d0bd57d
+K8s version:	v1.7.9_coreos.0
+Clustername:	k8scluster
+Cluster cidr:	192.168.3.0/24
+Managers:	3
+Workers:	0
+Manager img:	2004
+Worker img:	2008
+VIP1:		8.8.8.8
+VIP2:		4.4.4.4
+Dnsserver:	8.8.8.8
+Net overlay:	flannel
+Auth mode:	AlwaysAllow

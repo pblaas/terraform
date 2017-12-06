@@ -62,12 +62,14 @@ calico_template = TEMPLATE_ENVIRONMENT.get_template('calico.yaml.tmpl')
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
+clusterstatus_template = TEMPLATE_ENVIRONMENT.get_template('cluster.status.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
 
 
 try:
     #Create CA certificates
+
     def createCaCert():
         """Create CA certificates."""
         print("CA")
@@ -190,9 +192,33 @@ try:
         print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
         print("To interact with the cluster: \tsh kubeconfig.sh")
 
+        clusterstatusconfig_template = (clusterstatus_template.render(
+            etcdendpointsurls=iplist.rstrip(','),
+            etcdtoken=etcdTokenId.rsplit('/', 1)[1],
+            k8sver=args.k8sver,
+            clustername=args.clustername,
+            subnetcidr=args.subnetcidr,
+            managers=args.managers,
+            workers=args.workers,
+            managerimageflavor=args.managerimageflavor,
+            workerimageflavor=args.workerimageflavor,
+            floatingip1=args.floatingip1,
+            floatingip2=args.floatingip2,
+            dnsserver=args.dnsserver,
+            netoverlay=args.netoverlay,
+            authmode=args.authmode
+            ))
+
+        with open('cluster.status', 'w') as k8sstat:
+            k8sstat.write(clusterstatusconfig_template)
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
+
+    iplist = ""
+    for node in range(10, args.managers+10):
+        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
+        iplist = iplist + apiserver
 
     discovery_id = createClusterId()
     createCaCert()
@@ -236,12 +262,7 @@ try:
         floatingip2=args.floatingip2,
         ))
 
-    iplist = ""
-    for node in range(10, args.managers+10):
-        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
-        iplist = iplist + apiserver
 
-    print("Apiservers: "+ iplist.rstrip(','))
 
     for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
