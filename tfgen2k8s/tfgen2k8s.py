@@ -194,7 +194,7 @@ try:
 
         clusterstatusconfig_template = (clusterstatus_template.render(
             etcdendpointsurls=iplist.rstrip(','),
-            etcdtoken=etcdTokenId.rsplit('/', 1)[1],
+            etcdtoken=etcdTokenId,
             k8sver=args.k8sver,
             clustername=args.clustername,
             subnetcidr=args.subnetcidr,
