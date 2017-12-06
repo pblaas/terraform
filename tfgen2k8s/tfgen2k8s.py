@@ -209,7 +209,8 @@ try:
             authmode=args.authmode,
             cloudprovider=args.cloudprovider,
             calicocidr=args.calicocidr,
-            flannelver=args.flannelver
+            flannelver=args.flannelver,
+            keypair=args.keypair
             ))
 
         with open('cluster.status', 'w') as k8sstat:

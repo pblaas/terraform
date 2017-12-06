@@ -42,6 +42,7 @@ args = parser.parse_args()
 
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
+additional_node_template = TEMPLATE_ENVIRONMENT.get_template('additional_node.tf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
 
 
@@ -106,6 +107,8 @@ try:
             cloudprovider = str(fh[14].split("\t")[1])[:-1]
             calicocidr = str(fh[15].split("\t")[1])[:-1]
             flannelver = str(fh[16].split("\t")[1])[:-1]
+            keypair = str(fh[17].split("\t")[1])[:-1]
+
 
             createNodeCert(lanip, "worker")
             buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
@@ -146,6 +149,18 @@ try:
 
             with open(nodeyaml, 'w') as worker:
                 worker.write(worker_template)
+
+            additional_node = (additional_node_template.render(
+                clustername=clustername,
+                ipaddress=lanip,
+                workerimageflavor=workerimageflavor,
+                keypair=keypair,
+                subnetcidr=subnetcidr,
+                octet=lanip.rsplit('.', 1)[1]
+                ))
+
+            with open("k8s.tf", 'a') as k8stf:
+                k8stf.write(additional_node)
 
 except Exception as e:
     raise
