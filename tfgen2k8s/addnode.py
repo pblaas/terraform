@@ -7,7 +7,6 @@ __status__ = "Prototype"
 
 
 import argparse
-import httplib
 import os
 import subprocess
 import base64
@@ -41,12 +40,7 @@ parser.add_argument("--username", help="Openstack username - (OS_USERNAME enviro
 parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
 args = parser.parse_args()
 
-template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
-config_template = TEMPLATE_ENVIRONMENT.get_template('config.env.tmpl')
-calico_template = TEMPLATE_ENVIRONMENT.get_template('calico.yaml.tmpl')
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
-kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
-cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
 
@@ -72,7 +66,7 @@ try:
 
         nodeoctet = nodeip.rsplit('.')[3]
         subprocess.call(["openssl", "genrsa", "-out", nodeip +"-k8s-node-key.pem", "2048"], cwd='./tls')
-        subprocess.call(["openssl", "req", "-new", "-key", nodeip +"-k8s-node-key.pem", "-out", nodeip +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(args.clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", nodeip +"-k8s-node-key.pem", "-out", nodeip +"-k8s-node.csr", "-subj", "/CN=system:node:k8s-"+str(clustername)+"-node"+str(nodeoctet)+"/O=system:nodes", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", nodeip +"-k8s-node.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", nodeip+"-k8s-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
         # ${i}-etcd-worker.pem
@@ -80,106 +74,80 @@ try:
         subprocess.call(["openssl", "req", "-new", "-key", nodeip +"-etcd-node-key.pem", "-out", nodeip +"-etcd-node.csr", "-subj", "/CN="+nodeip+"-etcd-node", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", nodeip +"-etcd-node.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", nodeip+"-etcd-node.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
-
-
-    def printClusterInfo():
-        """Print cluster info."""
-        print("-"*40+"\n\nCluster Info:")
-        print("Etcd ID token:\t" + str(etcdTokenId.rsplit('/', 1)[1]))
-        print("k8s version:\t" + str(args.k8sver))
-        print("Clustername:\t" + str(args.clustername))
-        print("Cluster cidr:\t" + str(args.subnetcidr))
-        print("Managers:\t" + str(args.managers))
-        print("Workers:\t" + str(args.workers))
-        print("Manager img:\t" +str(args.managerimageflavor))
-        print("Worker img:\t" +str(args.workerimageflavor))
-        print("VIP1:\t\t" + str(args.floatingip1))
-        print("VIP2:\t\t" + str(args.floatingip2))
-        print("Dnsserver:\t" +str(args.dnsserver))
-        print("Net overlay:\t" + str(args.netoverlay))
-        print("Auth mode:\t" + str(args.authmode))
-        print("-"*40+"\n")
-        print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
-        print("To interact with the cluster: \tsh kubeconfig.sh")
-
-
     buffer = open('./tls/ca.pem', 'rU').read()
     CAPEM = base64.b64encode(buffer)
 
     buffer = open('./tls/etcd-ca.pem', 'rU').read()
     ETCDCAPEM = base64.b64encode(buffer)
 
-    cloudconfig_template = (cloudconfig_template.render(
-        authurl=os.environ["OS_AUTH_URL"],
-        username=args.username,
-        password=os.environ["OS_PASSWORD"],
-        region=os.environ["OS_REGION_NAME"],
-        projectname=args.projectname,
-        tenantid=os.environ["OS_TENANT_ID"],
-        ))
-
-    with open('cloud.conf', 'w') as cloudconf:
-        cloudconf.write(cloudconfig_template)
-
-
     buffer = open('cloud.conf', 'rU').read()
     cloudconfbase64 = base64.b64encode(buffer)
 
-    iplist = ""
-    for node in range(10, args.managers+10):
-        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
-        iplist = iplist + apiserver
-
-    print("Apiservers: "+ iplist.rstrip(','))
-
-
-    if args.ipaddress != "": 
+    if args.ipaddress != "":
         lanip = str(args.ipaddress)
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
-        createNodeCert(lanip, "worker")
-        buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
-        k8snodebase64 = base64.b64encode(buffer)
-        buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
-        k8snodekeybase64 = base64.b64encode(buffer)
-        buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
-        etcdnodebase64 = base64.b64encode(buffer)
-        buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
-        etcdnodekeybase64 = base64.b64encode(buffer)
+        with open('cluster.status', 'r') as clusterstat:
+            fh = clusterstat.readlines()
+            print(lanip)
+            etcdendpointsurls = str(fh[0].split("\t")[1])[:-1]
+            etcdtoken = str(fh[1].split("\t")[1])[:-1]
+            k8sver = str(fh[2].split("\t")[1])[:-1]
+            clustername = fh[3].split("\t")[1][:-1]
+            subnetcidr = str(fh[4].split("\t")[1])[:-1]
+            managers = str(fh[5].split("\t")[1])[:-1]
+            workers = str(fh[6].split("\t")[1])[:-1]
+            managerimageflavor = str(fh[7].split("\t")[1])[:-1]
+            workerimageflavor = str(fh[8].split("\t")[1])[:-1]
+            floatingip1 = str(fh[9].split("\t")[1])[:-1]
+            floatingip2 = str(fh[10].split("\t")[1])[:-1]
+            dnsserver = str(fh[11].split("\t")[1])[:-1]
+            netoverlay = str(fh[12].split("\t")[1])[:-1]
+            authmode = str(fh[13].split("\t")[1])[:-1]
+            cloudprovider = str(fh[14].split("\t")[1])[:-1]
+            calicocidr = str(fh[15].split("\t")[1])[:-1]
+            flannelver = str(fh[16].split("\t")[1])[:-1]
 
-        worker_template = (cloudconf_template.render(
-            isworker=1,
-            workers=args.workers,
-            dnsserver=args.dnsserver,
-            etcdendpointsurls=iplist.rstrip(','),
-            floatingip1=args.floatingip1,
-            k8sver=args.k8sver,
-            flannelver=args.flannelver,
-            netoverlay=args.netoverlay,
-            cloudprovider=args.cloudprovider,
-            authmode=args.authmode,
-            clustername=args.clustername,
-            subnetcidr=args.subnetcidr,
-            calicocidr=args.calicocidr,
-            ipaddress=lanip,
-            ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
-            loadbalancer=(args.subnetcidr).rsplit('.', 1)[0]+".3",
-            discoveryid=discovery_id,
-            cabase64=CAPEM,
-            etcdcabase64=ETCDCAPEM,
-            k8snodebase64=k8snodebase64,
-            k8snodekeybase64=k8snodekeybase64,
-            etcdnodebase64=etcdnodebase64,
-            etcdnodekeybase64=etcdnodekeybase64,
-            cloudconfbase64=cloudconfbase64,
-            ))
+            createNodeCert(lanip, "worker")
+            buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
+            k8snodebase64 = base64.b64encode(buffer)
+            buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
+            k8snodekeybase64 = base64.b64encode(buffer)
+            buffer = open('./tls/'+str(lanip)+"-etcd-node.pem", 'rU').read()
+            etcdnodebase64 = base64.b64encode(buffer)
+            buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
+            etcdnodekeybase64 = base64.b64encode(buffer)
 
-        with open(nodeyaml, 'w') as worker:
-            worker.write(worker_template)
+            worker_template = (cloudconf_template.render(
+                isworker=1,
+                workers=workers,
+                dnsserver=dnsserver,
+                etcdendpointsurls=etcdendpointsurls,
+                floatingip1=floatingip1,
+                k8sver=k8sver,
+                flannelver=flannelver,
+                netoverlay=netoverlay,
+                cloudprovider=cloudprovider,
+                authmode=authmode,
+                clustername=clustername,
+                subnetcidr=subnetcidr,
+                calicocidr=calicocidr,
+                ipaddress=lanip,
+                ipaddressgw=subnetcidr.rsplit('.', 1)[0]+".1",
+                loadbalancer=subnetcidr.rsplit('.', 1)[0]+".3",
+                discoveryid=etcdtoken,
+                cabase64=CAPEM,
+                etcdcabase64=ETCDCAPEM,
+                k8snodebase64=k8snodebase64,
+                k8snodekeybase64=k8snodekeybase64,
+                etcdnodebase64=etcdnodebase64,
+                etcdnodekeybase64=etcdnodekeybase64,
+                cloudconfbase64=cloudconfbase64,
+                ))
 
-    with open('k8s.tf', 'w') as k8s:
-        k8s.write(k8stemplate)
+            with open(nodeyaml, 'w') as worker:
+                worker.write(worker_template)
 
 except Exception as e:
     raise
 else:
-    printClusterInfo()
+    print("Done")

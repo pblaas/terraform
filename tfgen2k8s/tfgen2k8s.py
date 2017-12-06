@@ -206,7 +206,10 @@ try:
             floatingip2=args.floatingip2,
             dnsserver=args.dnsserver,
             netoverlay=args.netoverlay,
-            authmode=args.authmode
+            authmode=args.authmode,
+            cloudprovider=args.cloudprovider,
+            calicocidr=args.calicocidr,
+            flannelver=args.flannelver
             ))
 
         with open('cluster.status', 'w') as k8sstat:
