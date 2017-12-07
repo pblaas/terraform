@@ -38,6 +38,7 @@ parser.add_argument("ipaddress", help="node ip address")
 parser.add_argument("--workerimageflavor", help="Worker image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--username", help="Openstack username - (OS_USERNAME environment variable)", default=os.environ["OS_USERNAME"])
 parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
+parser.add_argument("--k8sver", help="Hyperkube version")
 args = parser.parse_args()
 
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
@@ -92,7 +93,10 @@ try:
             print(lanip)
             etcdendpointsurls = str(fh[0].split("\t")[1])[:-1]
             etcdtoken = str(fh[1].split("\t")[1])[:-1]
-            k8sver = str(fh[2].split("\t")[1])[:-1]
+            if args.k8sver is None:
+                k8sver = str(fh[2].split("\t")[1])[:-1]
+            else:
+                k8sver = args.k8sver
             clustername = fh[3].split("\t")[1][:-1]
             subnetcidr = str(fh[4].split("\t")[1])[:-1]
             managers = str(fh[5].split("\t")[1])[:-1]
