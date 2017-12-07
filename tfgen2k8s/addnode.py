@@ -35,7 +35,7 @@ if not "OS_AUTH_URL" in os.environ:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ipaddress", help="node ip address")
-parser.add_argument("--workerimageflavor", help="Worker image flavor ID - (2008)", type=int, default=2008)
+parser.add_argument("--workerimageflavor", help="Worker image flavor ID")
 parser.add_argument("--username", help="Openstack username - (OS_USERNAME environment variable)", default=os.environ["OS_USERNAME"])
 parser.add_argument("--projectname", help="Openstack project Name - (OS_TENANT_NAME environment variable)", default=os.environ["OS_TENANT_NAME"])
 parser.add_argument("--k8sver", help="Hyperkube version")
@@ -102,7 +102,10 @@ try:
             managers = str(fh[5].split("\t")[1])[:-1]
             workers = str(fh[6].split("\t")[1])[:-1]
             managerimageflavor = str(fh[7].split("\t")[1])[:-1]
-            workerimageflavor = str(fh[8].split("\t")[1])[:-1]
+            if args.workerimageflavor is None:
+                workerimageflavor = str(fh[8].split("\t")[1])[:-1]
+            else:
+                workerimageflavor = args.workerimageflavor
             floatingip1 = str(fh[9].split("\t")[1])[:-1]
             floatingip2 = str(fh[10].split("\t")[1])[:-1]
             dnsserver = str(fh[11].split("\t")[1])[:-1]
