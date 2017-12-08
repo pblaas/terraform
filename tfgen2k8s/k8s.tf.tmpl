@@ -288,7 +288,7 @@ resource "openstack_lb_pool_v2" "{{ clustername }}_pool_1" {
 
 resource "openstack_lb_member_v2" "{{ clustername }}_member_1_{{ loop.index }}" {
   pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_1.id}"
-  subnet_id = ""
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
   address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node{{ counter + loop.index -1 }}.access_ip_v4}"
   protocol_port    = 443
 }
@@ -343,7 +343,7 @@ resource "openstack_lb_pool_v2" "{{ clustername }}_pool_2" {
 {% if loop.index <= 3 %}
 resource "openstack_lb_member_v2" "{{ clustername }}_member_2_{{ loop.index }}" {
   pool_id = "${openstack_lb_pool_v2.{{ clustername }}_pool_2.id}"
-  subnet_id = ""
+  subnet_id = "${openstack_networking_subnet_v2.subnet_{{ clustername }}.id}"
   address = "${openstack_compute_instance_v2.k8s-{{ clustername }}-node{{ counter + loop.index -1 }}.access_ip_v4}"
   protocol_port    = 80
 }
