@@ -111,6 +111,9 @@ coreos:
         --cluster_domain=cluster.local \
         --client-ca-file=/etc/kubernetes/ssl/ca.pem \
         --anonymous-auth=false \
+{% if featuregates != None %}
+        --feature-gates={{ featuregates }} \
+{% endif %}
         --cloud-provider={{ cloudprovider }} \
         --cloud-config=/etc/kubernetes/cloud.conf
         ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
@@ -374,6 +377,9 @@ write_files:
           - --cluster-cidr=10.244.0.0/16
           - --conntrack-max-per-core=0
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
+{% if featuregates != None %}
+          - --feature-gates={{ featuregates }}
+{% endif %}
           securityContext:
             privileged: true
           volumeMounts:
@@ -421,6 +427,9 @@ write_files:
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
+{% if featuregates != None %}
+          - --feature-gates={{ featuregates }}
+{% endif %}
           resources:
             requests:
               cpu: 200m
@@ -465,6 +474,9 @@ write_files:
           - --master=http://127.0.0.1:8080
           - --leader-elect=true
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
+{% if featuregates != None %}
+          - --feature-gates={{ featuregates }}
+{% endif %}
           resources:
             requests:
               cpu: 100m
