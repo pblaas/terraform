@@ -2,7 +2,7 @@
 """Kubernetes cluster generator."""
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __status__ = "Prototype"
 
 
@@ -54,6 +54,7 @@ parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.9_coreos.0)", de
 parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", default="v0.8.0")
 parser.add_argument("--netoverlay", help="Network overlay - (flannel)", default="flannel")
 parser.add_argument("--authmode", help="Authorization mode - (AlwaysAllow)", default="AlwaysAllow")
+parser.add_argument("--featuregates", help="Optional feature gates")
 args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
@@ -188,6 +189,7 @@ try:
         print("Dnsserver:\t" +str(args.dnsserver))
         print("Net overlay:\t" + str(args.netoverlay))
         print("Auth mode:\t" + str(args.authmode))
+        print("featuregates:\t" + str(args.featuregates))
         print("-"*40+"\n")
         print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
         print("To interact with the cluster: \tsh kubeconfig.sh")
@@ -303,6 +305,7 @@ try:
             ipaddress=lanip,
             ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
             discoveryid=discovery_id,
+            featuregates=args.featuregates,
             cabase64=CAPEM,
             etcdcabase64=ETCDCAPEM,
             k8snodebase64=k8snodebase64,

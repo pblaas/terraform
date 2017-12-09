@@ -317,6 +317,9 @@ write_files:
           - --v=1
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf
+{% if featuregates != None %}
+          - --feature-gates={{ featuregates }}
+{% endif %}
           livenessProbe:
             httpGet:
               host: 127.0.0.1
