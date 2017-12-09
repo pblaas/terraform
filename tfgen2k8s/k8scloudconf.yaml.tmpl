@@ -111,9 +111,6 @@ coreos:
         --cluster_domain=cluster.local \
         --client-ca-file=/etc/kubernetes/ssl/ca.pem \
         --anonymous-auth=false \
-{% if featuregates != None %}
-        --feature-gates={{ featuregates }} \
-{% endif %}
         --cloud-provider={{ cloudprovider }} \
         --cloud-config=/etc/kubernetes/cloud.conf
         ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
@@ -307,12 +304,17 @@ write_files:
           - --service-cluster-ip-range=10.3.0.0/24
           - --secure-port=443
           - --advertise-address={{ ipaddress }}
+{% if alphafeatures == true %}
+          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction,Initializers
+          - --runtime-config=extensions/v1beta1/networkpolicies=true,admissionregistration.k8s.io/v1alpha1
+{% else %}
           - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction
+          - --runtime-config=extensions/v1beta1/networkpolicies=true
+{% endif %}
           - --tls-cert-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --tls-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
           - --service-account-key-file=/etc/kubernetes/ssl/sa-{{ clustername }}-k8s.pem
-          - --runtime-config=extensions/v1beta1/networkpolicies=true
           - --kubelet-client-certificate=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --kubelet-client-key=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --anonymous-auth=false
@@ -320,9 +322,6 @@ write_files:
           - --v=1
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf
-{% if featuregates != None %}
-          - --feature-gates={{ featuregates }}
-{% endif %}
           livenessProbe:
             httpGet:
               host: 127.0.0.1
@@ -377,9 +376,6 @@ write_files:
           - --cluster-cidr=10.244.0.0/16
           - --conntrack-max-per-core=0
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
-{% if featuregates != None %}
-          - --feature-gates={{ featuregates }}
-{% endif %}
           securityContext:
             privileged: true
           volumeMounts:
@@ -427,9 +423,6 @@ write_files:
           - --cloud-provider={{ cloudprovider }}
           - --cloud-config=/etc/kubernetes/ssl/cloud.conf
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
-{% if featuregates != None %}
-          - --feature-gates={{ featuregates }}
-{% endif %}
           resources:
             requests:
               cpu: 200m
@@ -474,9 +467,6 @@ write_files:
           - --master=http://127.0.0.1:8080
           - --leader-elect=true
           - --kubeconfig=/etc/kubernetes/master-kubeconfig.yaml
-{% if featuregates != None %}
-          - --feature-gates={{ featuregates }}
-{% endif %}
           resources:
             requests:
               cpu: 100m
