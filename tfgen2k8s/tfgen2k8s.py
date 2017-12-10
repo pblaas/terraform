@@ -2,7 +2,7 @@
 """Kubernetes cluster generator."""
 __author__ = "Patrick Blaas <patrick@kite4fun.nl>"
 __license__ = "MIT"
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 __status__ = "Prototype"
 
 
@@ -54,6 +54,7 @@ parser.add_argument("--k8sver", help="Hyperkube version - (v1.7.9_coreos.0)", de
 parser.add_argument("--flannelver", help="Flannel image version - (v0.8.0)", default="v0.8.0")
 parser.add_argument("--netoverlay", help="Network overlay - (flannel)", default="flannel")
 parser.add_argument("--authmode", help="Authorization mode - (AlwaysAllow)", default="AlwaysAllow")
+parser.add_argument("--alphafeatures", help="enable alpha feature - (false)", default="false")
 args = parser.parse_args()
 
 template = TEMPLATE_ENVIRONMENT.get_template('k8s.tf.tmpl')
@@ -62,12 +63,14 @@ calico_template = TEMPLATE_ENVIRONMENT.get_template('calico.yaml.tmpl')
 cloudconf_template = TEMPLATE_ENVIRONMENT.get_template('k8scloudconf.yaml.tmpl')
 kubeconfig_template = TEMPLATE_ENVIRONMENT.get_template('kubeconfig.sh.tmpl')
 cloudconfig_template = TEMPLATE_ENVIRONMENT.get_template('cloud.conf.tmpl')
+clusterstatus_template = TEMPLATE_ENVIRONMENT.get_template('cluster.status.tmpl')
 opensslmanager_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl.cnf.tmpl')
 opensslworker_template = TEMPLATE_ENVIRONMENT.get_template('./tls/openssl-worker.cnf.tmpl')
 
 
 try:
     #Create CA certificates
+
     def createCaCert():
         """Create CA certificates."""
         print("CA")
@@ -94,10 +97,6 @@ try:
         subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-k8s-key.pem", "-out", "sa-"+(args.clustername)+"-k8s-key.csr", "-subj", "/CN=sa:k8s", "-config", "openssl.cnf"], cwd='./tls')
         subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-k8s-key.csr", "-CA", "ca.pem", "-CAkey", "ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-k8s.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
-        print("Service account calico")
-        subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-calico-key.pem", "2048"], cwd='./tls')
-        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-calico-key.pem", "-out", "sa-"+(args.clustername)+"-calico-key.csr", "-subj", "/CN=sa:calico", "-config", "openssl.cnf"], cwd='./tls')
-        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-calico-key.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-calico.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
 
     #Create node certificates
     def createNodeCert(nodeip, k8srole):
@@ -137,6 +136,18 @@ try:
 
     def createCalicoObjects():
         """Create Calico cluster objects."""
+        openssltemplate = (opensslworker_template.render(
+            ipaddress="127.0.0.1"
+            ))
+
+        with open('./tls/openssl.cnf', 'w') as openssl:
+            openssl.write(openssltemplate)
+
+        print("Service account calico")
+        subprocess.call(["openssl", "genrsa", "-out", "sa-"+(args.clustername)+"-calico-key.pem", "2048"], cwd='./tls')
+        subprocess.call(["openssl", "req", "-new", "-key", "sa-"+(args.clustername)+"-calico-key.pem", "-out", "sa-"+(args.clustername)+"-calico-key.csr", "-subj", "/CN=sa:calico", "-config", "openssl.cnf"], cwd='./tls')
+        subprocess.call(["openssl", "x509", "-req", "-in", "sa-"+(args.clustername)+"-calico-key.csr", "-CA", "etcd-ca.pem", "-CAkey", "etcd-ca-key.pem", "-CAcreateserial", "-out", "sa-"+(args.clustername)+"-calico.pem", "-days", "365", "-extensions", "v3_req", "-extfile", "openssl.cnf"], cwd='./tls')
+
         buffer_calicosa = open("./tls/sa-"+ str(args.clustername) +"-calico.pem", "rU").read()
         etcdsacalicobase64 = base64.b64encode(buffer_calicosa)
         buffercalicosa = open("./tls/sa-"+ str(args.clustername) +"-calico-key.pem", "rU").read()
@@ -178,14 +189,42 @@ try:
         print("Dnsserver:\t" +str(args.dnsserver))
         print("Net overlay:\t" + str(args.netoverlay))
         print("Auth mode:\t" + str(args.authmode))
+        print("alphafeatures:\t" + str(args.alphafeatures))
         print("-"*40+"\n")
         print("To start building the cluster: \tterraform init && terraform plan && terraform apply && sh snat_acl.sh")
         print("To interact with the cluster: \tsh kubeconfig.sh")
 
+        clusterstatusconfig_template = (clusterstatus_template.render(
+            etcdendpointsurls=iplist.rstrip(','),
+            etcdtoken=etcdTokenId,
+            k8sver=args.k8sver,
+            clustername=args.clustername,
+            subnetcidr=args.subnetcidr,
+            managers=args.managers,
+            workers=args.workers,
+            managerimageflavor=args.managerimageflavor,
+            workerimageflavor=args.workerimageflavor,
+            floatingip1=args.floatingip1,
+            floatingip2=args.floatingip2,
+            dnsserver=args.dnsserver,
+            netoverlay=args.netoverlay,
+            authmode=args.authmode,
+            cloudprovider=args.cloudprovider,
+            calicocidr=args.calicocidr,
+            flannelver=args.flannelver,
+            keypair=args.keypair
+            ))
+
+        with open('cluster.status', 'w') as k8sstat:
+            k8sstat.write(clusterstatusconfig_template)
 
     if args.managers < 3:
         raise Exception('Managers need to be no less then 3.')
 
+    iplist = ""
+    for node in range(10, args.managers+10):
+        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
+        iplist = iplist + apiserver
 
     discovery_id = createClusterId()
     createCaCert()
@@ -197,9 +236,6 @@ try:
 
     buffer = open('./tls/etcd-ca.pem', 'rU').read()
     ETCDCAPEM = base64.b64encode(buffer)
-
-    with open('k8s_floating_ip.txt', 'w') as k8sfip:
-        k8sfip.write(args.floatingip1)
 
     cloudconfig_template = (cloudconfig_template.render(
         authurl=os.environ["OS_AUTH_URL"],
@@ -232,18 +268,12 @@ try:
         floatingip2=args.floatingip2,
         ))
 
-    iplist = ""
-    for node in range(10, args.managers+10):
-        apiserver = str("https://" + args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + ":2379,")
-        iplist = iplist + apiserver
 
-    print("Apiservers: "+ iplist.rstrip(','))
 
     for node in range(10, args.managers+10):
         lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node))
         nodeyaml = str("node_" + lanip.rstrip(' ') + ".yaml")
         createNodeCert(lanip, "manager")
-
         buffer = open("./tls/"+ str(lanip)+ "-k8s-node.pem", 'rU').read()
         k8snodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-k8s-node-key.pem", 'rU').read()
@@ -252,8 +282,6 @@ try:
         etcdnodebase64 = base64.b64encode(buffer)
         buffer = open('./tls/'+str(lanip)+"-etcd-node-key.pem", 'rU').read()
         etcdnodekeybase64 = base64.b64encode(buffer)
-
-        #"sa-"+str(args.clustername)+"k8s-key.pem"
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s.pem", 'rU').read()
         sak8sbase64 = base64.b64encode(buffer)
         buffer = open("./tls/sa-"+str(args.clustername)+"-k8s-key.pem", 'rU').read()
@@ -277,6 +305,7 @@ try:
             ipaddress=lanip,
             ipaddressgw=(args.subnetcidr).rsplit('.', 1)[0]+".1",
             discoveryid=discovery_id,
+            alphafeatures=args.alphafeatures,
             cabase64=CAPEM,
             etcdcabase64=ETCDCAPEM,
             k8snodebase64=k8snodebase64,
@@ -336,8 +365,6 @@ try:
         with open(nodeyaml, 'w') as worker:
             worker.write(worker_template)
 
-
-    #creating admin certificate
     createClientCert("admin")
     createCalicoObjects()
 
@@ -352,16 +379,6 @@ try:
 
     with open('k8s.tf', 'w') as k8s:
         k8s.write(k8stemplate)
-
-    iplist = ""
-    iplistArray = []
-    for node in range(10, args.managers+args.workers+10):
-        lanip = str(args.subnetcidr.rsplit('.', 1)[0] + "." + str(node) + " ")
-        iplist = iplist + lanip
-        iplistArray.append(lanip)
-
-    with open('k8s_cluster_ips.txt', 'w') as k8scips:
-        k8scips.write(str(iplist))
 
 except Exception as e:
     raise

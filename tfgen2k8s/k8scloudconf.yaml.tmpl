@@ -304,12 +304,17 @@ write_files:
           - --service-cluster-ip-range=10.3.0.0/24
           - --secure-port=443
           - --advertise-address={{ ipaddress }}
+{% if alphafeatures == "true" %}
+          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction,Initializers
+          - --runtime-config=extensions/v1beta1/networkpolicies=true,admissionregistration.k8s.io/v1alpha1
+{% else %}
           - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction
+          - --runtime-config=extensions/v1beta1/networkpolicies=true
+{% endif %}
           - --tls-cert-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --tls-private-key-file=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
           - --service-account-key-file=/etc/kubernetes/ssl/sa-{{ clustername }}-k8s.pem
-          - --runtime-config=extensions/v1beta1/networkpolicies=true
           - --kubelet-client-certificate=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node.pem
           - --kubelet-client-key=/etc/kubernetes/ssl/{{ ipaddress }}-k8s-node-key.pem
           - --anonymous-auth=false

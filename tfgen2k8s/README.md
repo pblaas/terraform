@@ -23,6 +23,7 @@ usage: tfgen2k8s.py [-h] [--corepassword COREPASSWORD] [--username USERNAME]
                     [--dnsserver DNSSERVER] [--cloudprovider CLOUDPROVIDER]
                     [--k8sver K8SVER] [--flannelver FLANNELVER]
                     [--netoverlay NETOVERLAY] [--authmode AUTHMODE]
+                    [--alphafeatures ALPHAFEATURES]
                     keypair floatingip1 floatingip2
 
 positional arguments:
@@ -61,6 +62,8 @@ optional arguments:
   --netoverlay NETOVERLAY
                         Network overlay - (flannel)
   --authmode AUTHMODE   Authorization mode - (AlwaysAllow)
+  --alphafeatures ALPHAFEATURES
+                        enable alpha feature - (false)
 ```
 
 ### Features
@@ -74,9 +77,10 @@ optional arguments:
 * Private network support
 * Loadbalancing k8s managers through OpenStack (LBAAS).
 * Loadbalancing k8s workers (up to first three) through OpenStack (LBAAS) for ingress.
-* all managers nodes are part of etcd2 cluster.
-* etcd2 cluster inside k8s cluster.
+* Etcd2 cluster inside k8s cluster.
+* Flannel network overlay support.
 * Calico network overlay support.
+* All managers nodes are part of etcd2 cluster.
 
 ### Caveats
 * Not all arguments are already implemented.
