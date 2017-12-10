@@ -77,10 +77,10 @@ optional arguments:
 * Private network support
 * Loadbalancing k8s managers through OpenStack (LBAAS).
 * Loadbalancing k8s workers (up to first three) through OpenStack (LBAAS) for ingress.
-* etcd2 cluster inside k8s cluster.
+* Etcd2 cluster inside k8s cluster.
 * Flannel network overlay support.
 * Calico network overlay support.
-* all managers nodes are part of etcd2 cluster.
+* All managers nodes are part of etcd2 cluster.
 
 ### Caveats
 * Not all arguments are already implemented.
