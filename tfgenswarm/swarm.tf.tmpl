@@ -191,7 +191,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
   name      = "swarm-{{ clustername }}-node10"
   availability_zone = "AMS-EQ1"
   image_name  = "{{ glanceimagename }}"
-  flavor_id = "{{ imageflavor }}"
+  flavor_id = "{{ managerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmbootstrap.sh")}"
@@ -221,7 +221,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
   name      = "swarm-{{ clustername }}-node{{ counter + loop.index }}"
   availability_zone = "AMS-EQ1"
   image_name  = "{{ glanceimagename }}"
-  flavor_id = "{{ imageflavor }}"
+  flavor_id = "{{ managerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmmanager.sh")}"
@@ -251,7 +251,7 @@ resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter
   name      = "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index  -1 }}"
   availability_zone = "AMS-EQ1"
   image_name  = "{{ glanceimagename }}"
-  flavor_id = "{{ imageflavor }}"
+  flavor_id = "{{ workerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmworker.sh")}"

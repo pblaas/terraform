@@ -43,7 +43,8 @@ parser.add_argument("--calicocidr", help="Calico subnet CIDR - (10.244.0.0/16)",
 parser.add_argument("--glanceimagename", help="Glance image name ID - (Ubuntu 17.10)", default="Ubuntu 17.10")
 parser.add_argument("--managernodes", help="Number of swarm manager nodes - (3)", type=int, default=3)
 parser.add_argument("--workernodes", help="Number of swarm workers nodes - (2)", type=int, default=2)
-parser.add_argument("--imageflavor", help="Image flavor ID - (2008)", type=int, default=2008)
+parser.add_argument("--managerimageflavor", help="Manager image flavor ID - (2004)", type=int, default=2004)
+parser.add_argument("--workerimageflavor", help="Worker image flavor ID - (2008)", type=int, default=2008)
 parser.add_argument("--cloudprovider", help="Cloud provider support - (openstack)", default="openstack")
 parser.add_argument("--dnsserver", help="DNS server - (8.8.8.8)", default="8.8.8.8")
 args = parser.parse_args()
@@ -87,7 +88,8 @@ try:
         subnetcidr=args.subnetcidr,
         calicocidr=args.calicocidr,
         keypair=args.keypair,
-        imageflavor=args.imageflavor,
+        managerimageflavor=args.managerimageflavor,
+        workerimageflavor=args.workerimageflavor,
         floatingip1=args.floatingip1,
         floatingip2=args.floatingip2,
         glanceimagename=args.glanceimagename
