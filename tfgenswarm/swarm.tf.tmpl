@@ -19,7 +19,7 @@ resource "openstack_networking_subnet_v2" "subnet_{{ clustername }}" {
 
 resource "openstack_networking_router_v2" "swarm_{{ clustername }}_router" {
   name             = "swarm_{{ clustername }}_router"
-  external_gateway = "f9c73cd5-9e7b-4bfd-89eb-c2f4f584c326"
+  external_network_id = "f9c73cd5-9e7b-4bfd-89eb-c2f4f584c326"
 }
 
 resource "openstack_networking_router_interface_v2" "swarm_{{ clustername }}_router_interface" {
@@ -190,8 +190,8 @@ resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_10" {
 resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node10" {
   name      = "swarm-{{ clustername }}-node10"
   availability_zone = "AMS-EQ1"
-  image_name  = "Ubuntu 16.04 (TLS)"
-  flavor_id = "{{ imageflavor }}"
+  image_name  = "{{ glanceimagename }}"
+  flavor_id = "{{ managerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmbootstrap.sh")}"
@@ -220,8 +220,8 @@ resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter
 resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter + loop.index }}" {
   name      = "swarm-{{ clustername }}-node{{ counter + loop.index }}"
   availability_zone = "AMS-EQ1"
-  image_name  = "Ubuntu 16.04 (TLS)"
-  flavor_id = "{{ imageflavor }}"
+  image_name  = "{{ glanceimagename }}"
+  flavor_id = "{{ managerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmmanager.sh")}"
@@ -250,8 +250,8 @@ resource "openstack_networking_port_v2" "swarm_{{ clustername }}_port_{{ counter
 resource "openstack_compute_instance_v2" "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index -1 }}" {
   name      = "swarm-{{ clustername }}-node{{ counter+managernodes + loop.index  -1 }}"
   availability_zone = "AMS-EQ1"
-  image_name  = "Ubuntu 16.04 (TLS)"
-  flavor_id = "{{ imageflavor }}"
+  image_name  = "{{ glanceimagename }}"
+  flavor_id = "{{ workerimageflavor }}"
   key_pair  = "{{ keypair }}"
   security_groups = ["${openstack_networking_secgroup_v2.secgroup_{{ clustername }}-1.id}"]
   user_data = "${file("swarmworker.sh")}"
